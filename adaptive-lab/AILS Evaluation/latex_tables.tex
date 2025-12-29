@@ -1,0 +1,62 @@
+% Auto-generated LaTeX tables for AILS paper
+
+
+\begin{table}[h]
+\centering
+\caption{Performance Comparison on Moving AI Lab Benchmarks}
+\label{tab:main_results}
+\begin{tabular}{llrrrr}
+\toprule
+Map & Algorithm & Time (ms) & Visited & Path Cost & Success \\
+\midrule
+den312d & AILS & 3.51 & 177 & 41.5 & 100\% \\
+den312d & A* & 2.85 & 247 & 41.2 & 100\% \\
+den312d & Dijkstra & 15.14 & 1936 & 41.2 & 100\% \\
+den312d & BFS & 3.66 & 1978 & 47.3 & 100\% \\
+\midrule
+ht_chantry & AILS & 8.70 & 400 & 79.3 & 100\% \\
+ht_chantry & A* & 8.42 & 688 & 78.9 & 100\% \\
+ht_chantry & Dijkstra & 79.67 & 9154 & 78.9 & 100\% \\
+ht_chantry & BFS & 20.26 & 9282 & 94.0 & 100\% \\
+\midrule
+random-64-64-20 & AILS & 2.75 & 165 & 41.3 & 100\% \\
+random-64-64-20 & A* & 2.64 & 253 & 40.8 & 100\% \\
+random-64-64-20 & Dijkstra & 11.94 & 1735 & 40.8 & 100\% \\
+random-64-64-20 & BFS & 3.31 & 1808 & 47.5 & 100\% \\
+\\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\begin{table}[h]
+\centering
+\caption{AILS Improvement over Standard A*}
+\label{tab:ails_improvement}
+\begin{tabular}{lrrrr}
+\toprule
+Map & Time Impr. (\%) & Visited Red. (\%) & Path Opt. (\%) & Avg Path Diff (\%) \\
+\midrule
+den312d & -23.1 & +28.1 & 75.0 & +0.53 \\
+ht_chantry & -3.3 & +41.8 & 59.0 & +0.44 \\
+random-64-64-20 & -4.4 & +34.8 & 66.0 & +1.18 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\begin{table}[h]
+\centering
+\caption{Statistical Analysis (AILS vs A*, $\alpha=0.05$)}
+\label{tab:statistical}
+\begin{tabular}{lrrrl}
+\toprule
+Map & $t$-statistic & $p$-value & Cohen's $d$ & Significant \\
+\midrule
+den312d & -3.5 & 6.99e-04 & -0.35 & Yes \\
+ht_chantry & -0.52 & 0.6048 & -0.05 & No \\
+random-64-64-20 & -0.79 & 0.4301 & -0.08 & No \\
+\bottomrule
+\end{tabular}
+\end{table}

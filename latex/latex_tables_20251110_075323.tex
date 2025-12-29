@@ -1,0 +1,37 @@
+% Auto-generated LaTeX tables
+% ==================================================
+
+\begin{table}[h]
+\centering
+\caption{Summary Statistics for All Algorithms}
+\label{tab:summary}
+\begin{tabular}{l|cc|cc|cc|cc|cc}
+\toprule
+\multirow{2}{*}{Algorithm} & \multicolumn{2}{c|}{Standard} & \multicolumn{2}{c|}{ILS} & \multicolumn{2}{c|}{AILS} & \multicolumn{2}{c|}{AILS vs Std} & \multicolumn{2}{c}{AILS vs ILS} \\
+& Time (s) & SD & Time (s) & SD & Time (s) & SD & Imp (\%) & SD & Imp (\%) & SD \\
+\midrule
+A* & 0.0253 & 0.0408 & 0.0174 & 0.0499 & 0.0146 & 0.0206 & 14.91 & 51.64 & -16.83 & 78.90 \\
+BFS & 0.1207 & 0.1206 & 0.0156 & 0.0362 & 0.0131 & 0.0179 & 78.14 & 36.77 & -19.51 & 138.10 \\
+Bidirectional & 0.0648 & 0.0661 & 0.0139 & 0.0206 & 0.0118 & 0.0149 & 69.18 & 39.76 & -4.23 & 93.93 \\
+DFS & 0.0997 & 0.1048 & 0.0164 & 0.0414 & 0.0126 & 0.0158 & 75.91 & 37.60 & -17.41 & 142.89 \\
+Dijkstra & 0.1523 & 0.1524 & 0.0179 & 0.0375 & 0.0164 & 0.0320 & 77.80 & 39.86 & -23.75 & 149.51 \\
+Greedy & 0.0035 & 0.0024 & 0.0092 & 0.0420 & 0.0054 & 0.0082 & -89.67 & 293.26 & -79.18 & 291.39 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[h]
+\centering
+\caption{Performance Scaling with Grid Size}
+\label{tab:scaling}
+\begin{tabular}{c|ccc}
+\toprule
+Grid Size & Time Improvement (\%) & Avg Visited Nodes & Avg Corridor Size \\
+\midrule
+50×50 & -5.2 & 703 & 887 \\
+100×100 & 60.9 & 618 & 828 \\
+200×200 & 57.5 & 2255 & 3235 \\
+\bottomrule
+\end{tabular}
+\end{table}

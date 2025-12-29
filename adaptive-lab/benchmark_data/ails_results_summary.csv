@@ -1,0 +1,10 @@
+map,algorithm,std_time,ails_time,std_visited,ails_visited,time_improvement,visited_improvement
+den312d,astar,1.42,6.12,152.52,124.04,-469.42,7.32
+den312d,bfs,4.34,4.82,1102.08,230.58,-10.78,78.09
+den312d,dijkstra,9.1,6.78,1057.52,219.82,27.21,77.6
+ht_chantry,astar,7.62,13.86,817.28,304.82,-482.07,-7.67
+ht_chantry,bfs,14.19,9.35,3520.54,381.62,33.07,87.74
+ht_chantry,dijkstra,30.37,13.83,3525.3,365.24,55.73,88.53
+random-64-64-20,astar,0.4,1.81,44.48,37.16,-393.81,10.89
+random-64-64-20,bfs,6.29,2.63,1609.24,203.74,53.91,86.5
+random-64-64-20,dijkstra,13.6,2.4,1624.52,109.78,79.49,92.25
