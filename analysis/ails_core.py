@@ -892,7 +892,7 @@ class GridGenerator:
 
     @staticmethod
     def generate_maze(size: int, seed: int = None) -> np.ndarray:
-        """Generate maze using recursive backtracking."""
+        """Generate maze using iterative backtracking (stack-based to avoid recursion limit)."""
         if seed is not None:
             np.random.seed(seed)
 
@@ -901,19 +901,31 @@ class GridGenerator:
 
         grid = np.ones((size, size), dtype=int)
 
-        def carve(r, c):
-            grid[r, c] = 0
+        # Use iterative approach with explicit stack to avoid recursion limit
+        stack = [(1, 1)]
+        grid[1, 1] = 0
+
+        while stack:
+            r, c = stack[-1]
+
+            # Get unvisited neighbors
             directions = [(0, 2), (2, 0), (0, -2), (-2, 0)]
             np.random.shuffle(directions)
 
+            found = False
             for dr, dc in directions:
                 nr, nc = r + dr, c + dc
                 if 0 < nr < size - 1 and 0 < nc < size - 1:
                     if grid[nr, nc] == 1:
+                        # Carve passage
                         grid[r + dr // 2, c + dc // 2] = 0
-                        carve(nr, nc)
+                        grid[nr, nc] = 0
+                        stack.append((nr, nc))
+                        found = True
+                        break
 
-        carve(1, 1)
+            if not found:
+                stack.pop()
 
         return grid
 
