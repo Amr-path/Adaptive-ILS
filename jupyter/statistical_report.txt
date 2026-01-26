@@ -1,0 +1,10 @@
+
+AILS STATISTICAL ANALYSIS REPORT
+==================================================
+
+Grid: 200x200, Density: 25.0%, Pairs: 200
+
+AILS-Adaptive vs A*:
+- Node reduction: 51.4%
+- Cohen's d: 0.76
+- Statistically significant: Yes (p < 0.001)

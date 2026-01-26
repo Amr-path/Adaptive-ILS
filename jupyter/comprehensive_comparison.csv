@@ -1,0 +1,7 @@
+Algorithm,Mean Time (ms),Std Time,Mean Nodes,Std Nodes,Success Rate
+A*,30.619,47.073,2349,1982,99.0%
+Dijkstra,144.722,158.229,15359,8121,99.0%
+BFS,87.797,71.446,15343,8147,99.0%
+Bidirectional A*,64.495,75.782,4998,4086,99.0%
+AILS-Base,48.722,79.335,1013,761,99.0%
+AILS-Adaptive,47.903,62.950,1148,656,99.0%
