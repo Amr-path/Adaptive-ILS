@@ -35,11 +35,9 @@
 
 \title{Adaptive Incremental Line Search: A Dynamic Corridor-Based Optimization Framework for Grid-Based Pathfinding in Robotics and Autonomous Systems}
 
-\author{\IEEEauthorblockN{Amr Elshahed\textsuperscript{1}, Majid Khan Bin Majahar Ali\textsuperscript{2,*}, Ahmad Sufril Azlan Mohamed\textsuperscript{1},\\
-Farah Aini Binti Abdullah\textsuperscript{1}, TS. Lee Jian Aun\textsuperscript{3}}
+\author{\IEEEauthorblockN{Amr Elshahed\textsuperscript{1}, Majid Khan Bin Majahar Ali\textsuperscript{2,*}, Farah Aini Binti Abdullah\textsuperscript{1}}
 \IEEEauthorblockA{\textsuperscript{1}School of Computer Sciences, Universiti Sains Malaysia, 11800 USM, Penang, Malaysia\\
 \textsuperscript{2}School of Mathematical Sciences, Universiti Sains Malaysia, 11800 USM, Penang, Malaysia\\
-\textsuperscript{3}LeadAlways Technology (M) Sdn Bhd, Penang, Malaysia\\
 *Corresponding author: majidkhanmajaharali@usm.my}}
 
 \maketitle
@@ -57,39 +55,19 @@ Adaptive corridors, dynamic optimization, grid-based pathfinding, obstacle densi
 %==============================================================================
 \section{Introduction}
 
-Pathfinding on grid-based maps is a cornerstone problem in numerous domains, including robotics~\cite{lavalle2006planning,siciliano2016springer}, autonomous vehicles~\cite{paden2016survey,gonzalez2015review}, video game AI~\cite{yap2002grid,cui2011based}, unmanned aerial vehicle (UAV) navigation~\cite{gasparetto2015path,goerzen2010survey}, and multi-agent systems~\cite{lee2025mcpp}. The fundamental challenge lies in computing optimal or near-optimal paths while minimizing computational resources---a trade-off that becomes increasingly critical as applications demand real-time performance in complex environments~\cite{liu2021path}.
+Pathfinding on grid-based maps is a cornerstone problem in numerous domains, including robotics~\cite{lavalle2006planning,siciliano2016springer}, autonomous vehicles~\cite{paden2016survey,gonzalez2015review}, unmanned aerial vehicle (UAV) navigation~\cite{goerzen2010survey,majeed2024uav}, and multi-agent systems~\cite{stern2019mapf}. The fundamental challenge lies in computing optimal or near-optimal paths while minimizing computational resources---a trade-off that becomes increasingly critical as applications demand real-time performance in complex environments~\cite{bento2021autonomous}.
 
 \subsection{Motivation and Problem Statement}
 
-Classical algorithms such as A*~\cite{hart1968formal} and Dijkstra's algorithm~\cite{dijkstra1959note} guarantee optimal solutions but suffer from excessive node exploration, particularly in large-scale environments. While A* improves upon Dijkstra through heuristic guidance, both algorithms explore nodes radially from the start position, leading to computational inefficiency when the optimal path follows a relatively direct trajectory~\cite{harabor2011online}. Recent advances in mobile robot navigation~\cite{mdpi2024improved,pmc2025review} and UAV path planning~\cite{du2023multi,majeed2024uav} have renewed interest in efficient pathfinding algorithms that can operate in real-time while maintaining path quality.
+Classical algorithms such as A*~\cite{hart1968formal} and Dijkstra's algorithm~\cite{dijkstra1959note} guarantee optimal solutions but suffer from excessive node exploration, particularly in large-scale environments. While A* improves upon Dijkstra through heuristic guidance, both algorithms explore nodes radially from the start position, leading to computational inefficiency when the optimal path follows a relatively direct trajectory~\cite{harabor2011online}. Recent advances in mobile robot navigation~\cite{pmc2025review} and UAV path planning~\cite{majeed2024uav} have renewed interest in efficient pathfinding algorithms that can operate in real-time while maintaining path quality.
 
-The inefficiency of traditional approaches becomes particularly pronounced in:
-\begin{enumerate}
-    \item \textbf{Large-scale environments}: As grid size increases, the number of explored nodes grows quadratically, significantly impacting computation time~\cite{sturtevant2012benchmarks}.
-    \item \textbf{Real-time applications}: Robotics and autonomous systems require path computation within strict time constraints~\cite{karaman2011sampling,liu2024hybrid}.
-    \item \textbf{Resource-constrained devices}: Embedded systems in robots and UAVs have limited computational resources~\cite{chen2024safety}.
-    \item \textbf{Dynamic replanning}: Environments with moving obstacles require frequent path recomputation~\cite{koenig2004lifelong,nair2024robust}.
-\end{enumerate}
+The inefficiency of traditional approaches becomes particularly pronounced in several contexts. In large-scale environments, the number of explored nodes grows quadratically with grid size, significantly impacting computation time~\cite{sturtevant2012benchmarks}. Real-time applications in robotics and autonomous systems require path computation within strict time constraints~\cite{karaman2011sampling,liu2024hybrid}. Embedded systems in robots and UAVs face limited computational resources~\cite{chen2024safety}, and environments with moving obstacles require frequent path recomputation~\cite{koenig2004lifelong,nair2024robust}.
 
 \subsection{Contributions}
 
-This paper presents the Adaptive Incremental Line Search (AILS), a novel framework that addresses these challenges through intelligent search space restriction. Our main contributions are:
+This paper presents the Adaptive Incremental Line Search (AILS), a novel framework that addresses these challenges through intelligent search space restriction.
 
-\begin{enumerate}
-    \item \textbf{Dynamic Corridor Adaptation}: A novel mechanism that adjusts corridor width based on local obstacle density gradients, maintaining narrow corridors in sparse regions while expanding near obstacles.
-
-    \item \textbf{Multi-Strategy Framework}: Integration of standard, predictive, and gradient-based approaches that automatically select the optimal strategy based on environmental characteristics.
-
-    \item \textbf{Algorithm-Agnostic Design}: A wrapper framework that enhances any graph search algorithm (A*, Dijkstra, BFS) without requiring algorithm-specific modifications.
-
-    \item \textbf{Comprehensive Empirical Evaluation}: Extensive experiments on 9,000+ test cases using Moving AI Lab benchmarks~\cite{stern2019mapf,sturtevant2012benchmarks} with statistical validation, including direct comparison with recent MCPP-GAK~\cite{lee2025mcpp} and classical baselines.
-
-    \item \textbf{Theoretical Analysis}: Formal proofs of completeness guarantees and complexity bounds for the proposed framework.
-\end{enumerate}
-
-\subsection{Paper Organization}
-
-The remainder of this paper is organized as follows. Section~\ref{sec:related} reviews related work in pathfinding optimization. Section~\ref{sec:problem} formally defines the problem. Section~\ref{sec:method} presents the AILS methodology. Section~\ref{sec:experiments} describes the experimental setup. Section~\ref{sec:results} presents results and analysis. Section~\ref{sec:ablation} provides ablation studies. Section~\ref{sec:discussion} discusses findings and limitations. Section~\ref{sec:conclusion} concludes the paper.
+First, we introduce a dynamic corridor adaptation mechanism that adjusts corridor width based on local obstacle density gradients, maintaining narrow corridors in sparse regions while expanding near obstacles. Second, we develop a multi-strategy framework integrating standard, predictive, and gradient-based approaches that automatically select the optimal strategy based on environmental characteristics. Third, we present an algorithm-agnostic design that enhances any graph search algorithm (A*, Dijkstra, BFS) without requiring algorithm-specific modifications. Fourth, we conduct comprehensive empirical evaluation on over 9,000 test cases using Moving AI Lab benchmarks~\cite{sturtevant2012benchmarks} with statistical validation, including direct comparison with recent approaches~\cite{lee2025mcpp} and classical baselines. Finally, we provide theoretical analysis with formal proofs of completeness guarantees and complexity bounds.
 
 %==============================================================================
 % SECTION 2: RELATED WORK
@@ -97,78 +75,43 @@ The remainder of this paper is organized as follows. Section~\ref{sec:related} r
 \section{Related Work}
 \label{sec:related}
 
-The evolution of pathfinding algorithms has progressed from exhaustive search methods to sophisticated techniques that exploit environmental structure. We present a comprehensive review of related work, categorizing prior research into six main areas and highlighting the gaps that AILS addresses.
+The evolution of pathfinding algorithms has progressed from exhaustive search methods to sophisticated techniques that exploit environmental structure. We review related work across several key areas to highlight the gaps that AILS addresses.
 
 \subsection{Classical Pathfinding Algorithms}
 
 The foundation of graph-based pathfinding was established by Dijkstra's seminal work~\cite{dijkstra1959note}, which guarantees shortest paths through exhaustive exploration with $O((V+E)\log V)$ complexity using a priority queue. While Dijkstra's algorithm remains optimal, it explores nodes radially from the source without directional guidance, leading to excessive node expansion in large-scale environments.
 
-A*~\cite{hart1968formal} represents a paradigm shift in informed search by incorporating an admissible heuristic $h(n)$ that estimates the remaining cost to the goal. This heuristic guidance reduces explored nodes while maintaining optimality, making A* the dominant algorithm for optimal pathfinding. The effectiveness of A* depends critically on the quality of the heuristic; common choices include the Manhattan distance for 4-connected grids and the Euclidean or Octile distance for 8-connected grids~\cite{korf2000recent}.
+A*~\cite{hart1968formal} represents a paradigm shift in informed search by incorporating an admissible heuristic $h(n)$ that estimates the remaining cost to the goal. This heuristic guidance reduces explored nodes while maintaining optimality, making A* the dominant algorithm for optimal pathfinding. The effectiveness of A* depends critically on the quality of the heuristic; common choices include the Manhattan distance for 4-connected grids and the Euclidean or Octile distance for 8-connected grids.
 
-Bidirectional search~\cite{russell2016artificial,pohl1971bi} reduces exploration by initiating searches from both the start and goal positions, meeting in the middle. This approach achieves $O(b^{d/2})$ complexity compared to $O(b^d)$ for unidirectional search, where $b$ is the branching factor and $d$ is the solution depth. However, bidirectional A* requires careful coordination between the two search frontiers to guarantee optimality~\cite{goldberg2005computing}.
+Bidirectional search~\cite{russell2016artificial} reduces exploration by initiating searches from both the start and goal positions, meeting in the middle. This approach achieves $O(b^{d/2})$ complexity compared to $O(b^d)$ for unidirectional search, where $b$ is the branching factor and $d$ is the solution depth.
 
-For dynamic environments, D*~\cite{stentz1994optimal} and its successor D* Lite~\cite{koenig2002d} enable incremental replanning when obstacles change, reusing previous search information to accelerate computation. Lifelong Planning A* (LPA*)~\cite{koenig2004lifelong} provides a theoretical foundation for incremental heuristic search with bounded suboptimality.
-
-Recent improvements to A* include multi-neighborhood search strategies~\cite{pmc2025improved}, adaptive weight functions~\cite{mdpi2024improved}, and integration with artificial potential fields~\cite{springer2025complex}. Liu et al.~\cite{liu2024hybrid} proposed a hybrid approach combining A* with dynamic window methods for mobile robot navigation. Ferguson et al.~\cite{ferguson2006guide} provided a comprehensive guide to heuristic-based path planning that remains influential.
+For dynamic environments, D* Lite~\cite{koenig2002d} enables incremental replanning when obstacles change, reusing previous search information to accelerate computation. Lifelong Planning A* (LPA*)~\cite{koenig2004lifelong} provides a theoretical foundation for incremental heuristic search with bounded suboptimality. Liu et al.~\cite{liu2024hybrid} proposed a hybrid approach combining A* with dynamic window methods for mobile robot navigation.
 
 \subsection{Search Space Reduction Techniques}
 
 A significant research direction focuses on reducing the search space to accelerate pathfinding while preserving solution quality.
 
-\subsubsection{Symmetry Breaking}
-Jump Point Search (JPS)~\cite{harabor2011online} represents a breakthrough in symmetry breaking for grid-based pathfinding. JPS prunes symmetric paths on uniform-cost grids by identifying ``jump points''---critical decision nodes where optimal paths may diverge. The algorithm achieves speedups of 10-100$\times$ over A* on uniform grids by eliminating the need to explicitly expand most intermediate nodes. Harabor and Grastien~\cite{harabor2014improving} later improved JPS with preprocessing techniques that further reduce online computation. However, JPS is fundamentally limited to uniform-cost grids and cannot handle weighted edges or varying terrain costs.
+Jump Point Search (JPS)~\cite{harabor2011online} represents a breakthrough in symmetry breaking for grid-based pathfinding. JPS prunes symmetric paths on uniform-cost grids by identifying ``jump points''---critical decision nodes where optimal paths may diverge. The algorithm achieves speedups of 10-100$\times$ over A* on uniform grids by eliminating the need to explicitly expand most intermediate nodes. However, JPS is fundamentally limited to uniform-cost grids and cannot handle weighted edges or varying terrain costs.
 
-Li et al.~\cite{li2020sipp} introduced new techniques for pairwise symmetry breaking in multi-agent pathfinding, extending symmetry exploitation to more complex scenarios. Wagner and Choset~\cite{wagner2022symmetry} generalized symmetry breaking concepts for multi-robot coordination.
+Hierarchical approaches decompose the search space into multiple abstraction levels. HPA*~\cite{botea2004near} creates a hierarchical graph structure by dividing the map into clusters and pre-computing intra-cluster paths. While HPA* provides significant speedups, path quality may degrade, yielding near-optimal rather than optimal solutions. Contraction Hierarchies~\cite{geisberger2008contraction} represent the state-of-the-art for road network routing, precomputing shortcuts that accelerate queries to milliseconds. However, the expensive preprocessing phase limits applicability to static environments.
 
-\subsubsection{Hierarchical Decomposition}
-Hierarchical approaches decompose the search space into multiple abstraction levels. HPA*~\cite{botea2004near} creates a hierarchical graph structure by dividing the map into clusters and pre-computing intra-cluster paths. While HPA* provides significant speedups, path quality may degrade, yielding near-optimal rather than optimal solutions.
-
-Rectangular Symmetry Reduction (RSR)~\cite{harabor2011optimal} identifies maximal rectangular obstacle-free regions and reduces the graph to perimeter nodes, effectively pruning the interior of free regions. Sturtevant et al.~\cite{sturtevant2007memory} developed memory-efficient abstractions for pathfinding that balance memory usage with query performance.
-
-Contraction Hierarchies~\cite{geisberger2008contraction} represent the state-of-the-art for road network routing, precomputing shortcuts that accelerate queries to milliseconds. However, the expensive preprocessing phase limits applicability to static environments. Bast et al.~\cite{bast2016route} provided a comprehensive survey of route planning techniques in transportation networks.
-
-\subsubsection{Any-Angle Path Planning}
-Theta*~\cite{nash2007theta} enables any-angle paths for smoother trajectories by allowing line-of-sight shortcuts between non-adjacent nodes, producing shorter paths than grid-constrained algorithms. Nash et al.~\cite{nash2010lazy} introduced Lazy Theta*, which defers line-of-sight checks for improved efficiency in 3D environments.
+Theta*~\cite{nash2007theta} enables any-angle paths for smoother trajectories by allowing line-of-sight shortcuts between non-adjacent nodes, producing shorter paths than grid-constrained algorithms.
 
 \subsection{Corridor and Channel-Based Methods}
 
 Corridor-based methods represent a fundamentally different approach to search space reduction by restricting exploration to a subset of the configuration space defined around a reference trajectory.
 
-\subsubsection{Voronoi-Based Approaches}
-Voronoi diagrams~\cite{aurenhammer1991voronoi} partition space into regions based on proximity to obstacles, creating networks of maximally-safe paths. Bhattacharya and Gavrilova~\cite{bhattacharya2008roadmap} proposed roadmap-based path planning using Voronoi diagrams for clearance-based shortest paths. While Voronoi-based methods guarantee maximum clearance, they may not produce shortest paths and require preprocessing to construct the diagram.
+Voronoi diagrams~\cite{aurenhammer1991voronoi} partition space into regions based on proximity to obstacles, creating networks of maximally-safe paths. While Voronoi-based methods guarantee maximum clearance, they may not produce shortest paths and require preprocessing to construct the diagram. Probabilistic Roadmaps (PRM)~\cite{kavraki1996probabilistic} and Rapidly-exploring Random Trees (RRT)~\cite{lavalle1998rapidly} generate corridors implicitly through random sampling of the configuration space. These methods excel in high-dimensional spaces where explicit discretization is infeasible. Karaman and Frazzoli~\cite{karaman2011sampling} introduced RRT* and PRM*, which provide asymptotic optimality guarantees.
 
-\subsubsection{Sampling-Based Corridors}
-Probabilistic Roadmaps (PRM)~\cite{kavraki1996probabilistic} and Rapidly-exploring Random Trees (RRT)~\cite{lavalle1998rapidly} generate corridors implicitly through random sampling of the configuration space. These methods excel in high-dimensional spaces where explicit discretization is infeasible. Karaman and Frazzoli~\cite{karaman2011sampling} introduced RRT* and PRM*, which provide asymptotic optimality guarantees.
+Recent work has explored dynamic corridor generation for real-time applications. The ``Bubble Planner''~\cite{chen2024bubble} generates receding corridors for high-speed quadrotor trajectory planning, dynamically adjusting corridor boundaries based on sensor feedback. Wu et al.~\cite{wu2023corridor} proposed corridor-guided path planning for quadrotor teams in cluttered environments. Zhou et al.~\cite{zhou2024local} introduced local density-aware path planning for mobile robots in obstacle-rich environments, sharing some conceptual similarities with our approach but using different density estimation techniques. Huang et al.~\cite{huang2024corridor} developed corridor-constrained path planning for multi-agent systems, while Cohen et al.~\cite{cohen2023corridor} explored corridor-based path planning with multi-agent coordination. Wang et al.~\cite{wang2025adaptive} developed adaptive search corridors for multi-robot path planning, providing theoretical analysis of corridor-based approaches.
 
-\subsubsection{Dynamic Corridor Generation}
-Recent work has explored dynamic corridor generation for real-time applications. The ``Bubble Planner''~\cite{chen2024bubble} generates receding corridors for high-speed quadrotor trajectory planning, dynamically adjusting corridor boundaries based on sensor feedback. Wu et al.~\cite{wu2023corridor} proposed corridor-guided path planning for quadrotor teams in cluttered environments. Hsu et al.~\cite{hsu2024dynamic} addressed dynamic corridor generation for safe robot navigation in changing environments.
+Existing corridor-based approaches suffer from several limitations. Most methods use a uniform corridor width, wasting computational resources in obstacle-free regions while potentially being insufficient near complex obstacles. Many approaches require expensive offline computation to generate corridor structures. Corridor parameters are typically fixed a priori rather than adapting to local environmental conditions. Most corridor methods are designed for specific pathfinding algorithms rather than providing algorithm-agnostic enhancement.
 
-Majeed et al.~\cite{majeed2024constrained} proposed constrained polygonal space for UAV path planning where the search space is restricted into polygonal regions. Zhou et al.~\cite{zhou2024local} introduced local density-aware path planning for mobile robots in obstacle-rich environments, sharing some conceptual similarities with our approach but using different density estimation techniques.
-
-Huang et al.~\cite{huang2024corridor} recently developed corridor-constrained path planning for multi-agent systems, while Cohen et al.~\cite{cohen2023corridor} explored corridor-based path planning with multi-agent coordination. Zhang et al.~\cite{zhang2024density} proposed density-based search space reduction for real-time motion planning. Wang et al.~\cite{wang2025adaptive} developed adaptive search corridors for multi-robot path planning, providing theoretical analysis of corridor-based approaches.
-
-\subsubsection{Limitations of Existing Corridor Methods}
-Existing corridor-based approaches suffer from several limitations:
-\begin{enumerate}
-    \item \textbf{Fixed-width corridors}: Most methods use a uniform corridor width, wasting computational resources in obstacle-free regions while potentially being insufficient near complex obstacles.
-    \item \textbf{Preprocessing requirements}: Many approaches require expensive offline computation to generate corridor structures.
-    \item \textbf{Static adaptation}: Corridor parameters are typically fixed a priori rather than adapting to local environmental conditions.
-    \item \textbf{Algorithm specificity}: Most corridor methods are designed for specific pathfinding algorithms rather than providing algorithm-agnostic enhancement.
-\end{enumerate}
-
-Our AILS approach addresses these limitations through dynamic, density-adaptive corridor generation that:
-\begin{itemize}
-    \item Adapts corridor width locally based on obstacle density gradients
-    \item Requires no preprocessing or hierarchical decomposition
-    \item Maintains completeness through automatic corridor expansion
-    \item Provides algorithm-agnostic integration with any graph search algorithm
-\end{itemize}
+Our AILS approach addresses these limitations through dynamic, density-adaptive corridor generation. The framework adapts corridor width locally based on obstacle density gradients, requires no preprocessing or hierarchical decomposition, maintains completeness through automatic corridor expansion, and provides algorithm-agnostic integration with any graph search algorithm.
 
 \subsection{Obstacle Density Estimation and Occupancy Grids}
 
-The concept of using occupancy information for path planning has a rich history. Moravec~\cite{moravec1988sensor} introduced certainty grids for mobile robot perception, establishing the foundation for probabilistic occupancy mapping. Elfes~\cite{elfes1989using} extended this work to using occupancy grids for mobile robot perception and navigation. Thrun~\cite{thrun2001learning} developed learning methods for occupancy grid maps using forward sensor models.
-
-Modern approaches include OctoMap~\cite{hornung2013octomap}, an efficient probabilistic 3D mapping framework based on octrees that supports multi-resolution occupancy representation. Pan et al.~\cite{pan2022occupancy} proposed occupancy grid-based path planning with uncertainty quantification.
+The concept of using occupancy information for path planning has a rich history. Moravec~\cite{moravec1988sensor} introduced certainty grids for mobile robot perception, establishing the foundation for probabilistic occupancy mapping. Modern approaches include OctoMap~\cite{hornung2013octomap}, an efficient probabilistic 3D mapping framework based on octrees that supports multi-resolution occupancy representation.
 
 Our local density estimation differs from traditional occupancy grids by computing density within sliding windows along the reference path, enabling adaptive corridor radius computation without maintaining full map representations.
 
@@ -179,43 +122,25 @@ Multi-agent pathfinding (MAPF) and coverage path planning (CPP) represent import
 \subsubsection{Multi-Agent Path Finding}
 Sharon et al.~\cite{sharon2015conflict} introduced Conflict-Based Search (CBS), which provides optimal solutions through a two-level search that resolves conflicts between agents. Stern et al.~\cite{stern2019mapf} established standard definitions, variants, and benchmarks for MAPF research.
 
-Li et al.~\cite{li2021eecbs} developed EECBS, a bounded-suboptimal search for MAPF that trades off optimality for computational efficiency. Boyarski et al.~\cite{boyarski2022iteratively} proposed iteratively-refined feasibility improvement for MAPF. Felner et al.~\cite{felner2024advances} provided a recent overview of advances from theory to practice.
+Li et al.~\cite{li2021eecbs} developed EECBS, a bounded-suboptimal search for MAPF that trades off optimality for computational efficiency.
 
-\subsubsection{Coverage Path Planning}
-Galceran and Carreras~\cite{galceran2013survey} provided a foundational survey on coverage path planning for robotics. Cabreira et al.~\cite{cabreira2019survey} focused on coverage path planning with unmanned aerial vehicles.
+\subsection{Multi-Agent and Coverage Path Planning}
 
-Multi-agent coverage path planning (MCPP) has gained significant attention for applications including 3D scanning~\cite{almadhoun2019survey}, agriculture~\cite{botteghi2020multi}, and disaster response~\cite{xiong2023multi}. Lee \& Lee~\cite{lee2025mcpp} recently proposed MCPP-GAK, which uses graph-adapted K-means clustering for non-grid environments. Their approach modifies the inverse internal weight (IIW) cost function for spanning tree coverage and introduces cluster propagation using cluster-level graphs.
+Galceran and Carreras~\cite{galceran2013survey} provided a foundational survey on coverage path planning for robotics. Multi-agent pathfinding (MAPF) has become an active research area, with Stern et al.~\cite{stern2019mapf} establishing standard definitions and benchmarks. Sharon et al.~\cite{sharon2015conflict} introduced Conflict-Based Search (CBS) for optimal multi-agent solutions, while Li et al.~\cite{li2021eecbs} developed EECBS for bounded-suboptimal search.
 
-Previous MCPP methods include Multi-robot Spanning Tree Coverage (MSTC)~\cite{hazon2005redundancy,hazon2006towards}, Multi-robot Forest Coverage (MFC)~\cite{zheng2005multi}, and DARP~\cite{kapoutsis2017darp}. MSTC*~\cite{tang2021mstc} extends these approaches with physical constraints, while TMSTC*~\cite{lu2023tmstc} minimizes turns for improved efficiency.
-
-Recent work by Wang et al.~\cite{wang2024apf} introduced APF-CPP, an artificial potential field-based multi-robot coverage path planning approach. Collins et al.~\cite{collins2021scalable} presented scalable coverage path planning using Voronoi diagrams for multi-robot teams.
+Lee \& Lee~\cite{lee2025mcpp} recently proposed MCPP-GAK, which uses graph-adapted K-means clustering for multi-agent coverage in non-grid environments. Their approach modifies the inverse internal weight cost function for spanning tree coverage and introduces cluster propagation using cluster-level graphs.
 
 \subsection{Machine Learning for Path Planning}
 
-Deep learning and reinforcement learning approaches have emerged as powerful alternatives to classical methods. Sartoretti et al.~\cite{sartoretti2019primal} introduced PRIMAL, combining reinforcement and imitation learning for multi-agent pathfinding. Damani et al.~\cite{damani2021primal2} extended this to lifelong scenarios with PRIMAL$_2$.
+Deep learning and reinforcement learning approaches have emerged as powerful alternatives to classical methods. Zhang et al.~\cite{zhang2023deep} provided a comprehensive survey of deep reinforcement learning for path planning, documenting the shift toward learning-based approaches in recent years.
 
-Ma and Yang~\cite{ma2021learning} developed learning-based approaches for solving MAPF problems, while Rivi\`ere et al.~\cite{riviere2021neural} proposed neural tree expansion for multi-robot planning. Zhang et al.~\cite{zhang2023deep} provided a comprehensive survey of deep reinforcement learning for path planning.
+\subsection{Applications}
 
-Decentralized coverage path planning with reinforcement learning~\cite{liu2022decentralized} and cooperative coverage using improved K-means with deep reinforcement learning~\cite{ni2024cooperative} represent recent advances in learning-based coverage planning.
-
-\subsection{Applications in Robotics and Autonomous Systems}
-
-Pathfinding algorithms find applications across diverse domains. In mobile robotics~\cite{siciliano2016springer,bento2021autonomous}, efficient path computation enables real-time navigation in complex environments. LaValle~\cite{lavalle2006planning} provided a comprehensive treatment of planning algorithms for robotic systems.
-
-UAV navigation~\cite{goerzen2010survey,majeed2024uav,du2023multi,gao2024drone} presents unique challenges including 3D motion planning and aerodynamic constraints. Autonomous vehicles~\cite{paden2016survey,gonzalez2015review,dolgov2010path,chen2023path,zhou2024real} require path planning that considers vehicle kinematics, traffic rules, and safety constraints.
-
-Warehouse robotics~\cite{wu2020warehouse,fragapane2021increasing} and search-and-rescue operations~\cite{queralta2020collaborative} represent additional domains where efficient pathfinding is critical. Yu et al.~\cite{yu2023collision} provided a comprehensive review of collision-free path planning for autonomous mobile robots.
+Pathfinding algorithms find applications across diverse domains. In mobile robotics~\cite{siciliano2016springer,bento2021autonomous}, efficient path computation enables real-time navigation in complex environments. LaValle~\cite{lavalle2006planning} provided a comprehensive treatment of planning algorithms for robotic systems. UAV navigation~\cite{goerzen2010survey,majeed2024uav,gao2024drone} presents unique challenges including 3D motion planning and aerodynamic constraints. Autonomous vehicles~\cite{paden2016survey,gonzalez2015review,dolgov2010path} require path planning that considers vehicle kinematics, traffic rules, and safety constraints. Warehouse robotics~\cite{wu2020warehouse} and collision-free path planning~\cite{yu2023collision} represent additional domains where efficient pathfinding is critical.
 
 \subsection{Summary and Research Gaps}
 
-Table~\ref{tab:comparison} summarizes the comparison between AILS and related approaches. Despite significant advances in pathfinding research, several gaps remain:
-
-\begin{enumerate}
-    \item \textbf{Local Adaptation}: Existing corridor methods use global or static corridor widths rather than adapting locally to obstacle distributions.
-    \item \textbf{Preprocessing Requirements}: Many efficient methods require expensive preprocessing, limiting applicability to dynamic environments.
-    \item \textbf{Algorithm Specificity}: Most optimizations are designed for specific algorithms rather than providing general enhancement frameworks.
-    \item \textbf{Density-Aware Search}: Limited work exists on using local obstacle density to guide search space restriction.
-\end{enumerate}
+Table~\ref{tab:comparison} summarizes the comparison between AILS and related approaches. Despite significant advances in pathfinding research, several gaps remain. Existing corridor methods use global or static corridor widths rather than adapting locally to obstacle distributions. Many efficient methods require expensive preprocessing, limiting applicability to dynamic environments. Most optimizations are designed for specific algorithms rather than providing general enhancement frameworks. Limited work exists on using local obstacle density to guide search space restriction.
 
 AILS addresses these gaps by providing a preprocessing-free, algorithm-agnostic framework that dynamically adapts corridor width based on local obstacle density gradients.
 
@@ -247,12 +172,7 @@ MCPP-GAK & N/A & Yes & Partial & Non-grid & \cite{lee2025mcpp} \\
 
 \subsection{Graph Representation}
 
-We model the environment as an 8-connected grid graph $G = (V, E, W)$, where:
-\begin{itemize}
-    \item $V = \{v_{i,j} : 0 \leq i < H, 0 \leq j < W\}$ is the set of vertices corresponding to grid cells
-    \item $E \subseteq V \times V$ is the set of edges connecting adjacent cells
-    \item $W: E \rightarrow \mathbb{R}^+$ assigns edge weights (1.0 for cardinal, $\sqrt{2}$ for diagonal moves)
-\end{itemize}
+We model the environment as an 8-connected grid graph $G = (V, E, W)$. Here, $V = \{v_{i,j} : 0 \leq i < H, 0 \leq j < W\}$ is the set of vertices corresponding to grid cells, $E \subseteq V \times V$ is the set of edges connecting adjacent cells, and $W: E \rightarrow \mathbb{R}^+$ assigns edge weights (1.0 for cardinal moves, $\sqrt{2}$ for diagonal moves).
 
 Each vertex $v \in V$ has an occupancy status:
 \begin{equation}
@@ -335,29 +255,13 @@ AILS introduces a fundamentally different approach to corridor-based pathfinding
 \label{fig:ails_overview}
 \end{figure}
 
-The algorithm consists of four main phases:
-\begin{enumerate}
-    \item \textbf{Reference Path Generation}: Compute a Bresenham line from start to goal as the reference trajectory.
-    \item \textbf{Per-Point Density Estimation}: For each point along the Bresenham line, compute local obstacle density within a sliding window.
-    \item \textbf{Adaptive Corridor Construction}: Assign a corridor radius to each point based on its local density---narrow in clear areas, wide near obstacles.
-    \item \textbf{Constrained Search with Fallback}: Execute the base pathfinding algorithm within the corridor; if no path is found, incrementally expand.
-\end{enumerate}
+The algorithm consists of four main phases. First, in reference path generation, a Bresenham line from start to goal serves as the reference trajectory. Second, per-point density estimation computes local obstacle density within a sliding window for each point along the Bresenham line. Third, adaptive corridor construction assigns a corridor radius to each point based on its local density, creating narrow corridors in clear areas and wide corridors near obstacles. Fourth, constrained search with fallback executes the base pathfinding algorithm within the corridor and incrementally expands if no path is found.
 
 \subsection{The Core Innovation: Localized Adaptive Expansion}
 
-The key differentiator of AILS from prior corridor-based methods is \textbf{local adaptation}. We emphasize this critical distinction:
+The key differentiator of AILS from prior corridor-based methods is local adaptation. Traditional corridor methods use a fixed corridor width along the entire path or expand the entire corridor uniformly when blocked. In contrast, AILS creates a corridor that ``breathes''---expanding only where obstacles are detected while remaining narrow elsewhere.
 
-\begin{itemize}
-    \item \textbf{Traditional Corridor Methods}: Use a \emph{fixed} corridor width along the entire path, or expand the \emph{entire} corridor uniformly when blocked.
-    \item \textbf{AILS}: The corridor ``breathes''---expanding only where obstacles are detected, remaining narrow elsewhere.
-\end{itemize}
-
-This localized approach provides three fundamental advantages:
-\begin{enumerate}
-    \item \textbf{Efficiency}: Narrow corridors in clear regions minimize the search space and reduce explored nodes.
-    \item \textbf{Adaptability}: Wide corridors only where needed allow paths to navigate around obstacles.
-    \item \textbf{Scalability}: The corridor size scales with obstacle complexity rather than grid size.
-\end{enumerate}
+This localized approach provides three fundamental advantages. First, narrow corridors in clear regions minimize the search space and reduce explored nodes, improving efficiency. Second, wide corridors only where needed allow paths to navigate around obstacles, providing adaptability. Third, the corridor size scales with obstacle complexity rather than grid size, ensuring scalability.
 
 Fig.~\ref{fig:corridor_comparison} illustrates the difference between fixed-width and adaptive corridors.
 
@@ -431,12 +335,7 @@ where $\mathcal{O} = \{v \in V : \text{occ}(v) = 1\}$ is the set of obstacle cel
     W(p) = \{v_{i,j} : |i - p_x| \leq \lfloor w/2 \rfloor, |j - p_y| \leq \lfloor w/2 \rfloor\}
 \end{equation}
 
-The density value $\sigma(p) \in [0, 1]$ captures the local obstacle concentration:
-\begin{itemize}
-    \item $\sigma(p) = 0$: No obstacles in the local neighborhood (clear region)
-    \item $\sigma(p) = 1$: Maximum obstacle density (blocked region)
-    \item $0 < \sigma(p) < 1$: Partial obstacle presence (transition region)
-\end{itemize}
+The density value $\sigma(p) \in [0, 1]$ captures the local obstacle concentration. When $\sigma(p) = 0$, there are no obstacles in the local neighborhood (clear region). When $\sigma(p) = 1$, the region has maximum obstacle density (blocked region). Intermediate values indicate partial obstacle presence (transition regions).
 
 \subsubsection{Efficient Density Computation}
 
@@ -448,9 +347,10 @@ For computational efficiency, we employ integral images (summed area tables) for
 
 The density at any point can then be computed in constant time:
 
-\begin{equation}
-    \sigma(p) = \frac{I(x+r, y+r) - I(x-r-1, y+r) - I(x+r, y-r-1) + I(x-r-1, y-r-1)}{(2r+1)^2}
-\end{equation}
+\begin{multline}
+    \sigma(p) = \frac{1}{(2r+1)^2}\Big(I(x+r, y+r) - I(x-r-1, y+r) \\
+    - I(x+r, y-r-1) + I(x-r-1, y-r-1)\Big)
+\end{multline}
 
 where $r = \lfloor w/2 \rfloor$.
 
@@ -465,8 +365,10 @@ For improved adaptation in environments with rapid density transitions, we optio
 using central differences on the density field. The gradient magnitude indicates how quickly obstacle density is changing, allowing predictive expansion before obstacles are encountered:
 
 \begin{equation}
-    |\nabla\sigma(p)| = \sqrt{\left(\frac{\sigma(p+1) - \sigma(p-1)}{2}\right)^2 + \left(\frac{\sigma(p_y+1) - \sigma(p_y-1)}{2}\right)^2}
+    |\nabla\sigma(p)| = \sqrt{\left(\frac{\partial \sigma}{\partial x}\right)^2 + \left(\frac{\partial \sigma}{\partial y}\right)^2}
 \end{equation}
+
+where the partial derivatives are approximated using central differences: $\frac{\partial \sigma}{\partial x} \approx \frac{\sigma(x+1,y) - \sigma(x-1,y)}{2}$ and similarly for $y$.
 
 \subsection{Adaptive Corridor Radius Computation}
 
@@ -477,19 +379,9 @@ The \textbf{key equation} of AILS computes a variable radius for each point base
     \label{eq:radius}
 \end{equation}
 
-where:
-\begin{itemize}
-    \item $r_{\min}$: minimum corridor radius (typically 1-2 cells), used in obstacle-free regions
-    \item $r_{\max}$: maximum corridor radius (typically 5-10\% of grid size), used near dense obstacles
-    \item $\alpha$: density sensitivity parameter (default: 1.0), controls the expansion curve
-\end{itemize}
+Here, $r_{\min}$ is the minimum corridor radius (typically 1-2 cells), used in obstacle-free regions; $r_{\max}$ is the maximum corridor radius (typically 5-10\% of grid size), used near dense obstacles; and $\alpha$ is the density sensitivity parameter (default: 1.0) that controls the expansion curve.
 
-The behavior of this equation is fundamental to understanding AILS:
-\begin{itemize}
-    \item When $\sigma(p) = 0$ (no nearby obstacles): $r(p) = r_{\min}$ (narrow corridor)
-    \item When $\sigma(p) = 1$ (maximum obstacles): $r(p) = r_{\max}$ (wide corridor)
-    \item The $\alpha$ parameter controls the transition: $\alpha < 1$ expands early, $\alpha > 1$ delays expansion
-\end{itemize}
+The behavior of this equation is fundamental to understanding AILS. When $\sigma(p) = 0$ (no nearby obstacles), $r(p) = r_{\min}$, producing a narrow corridor. When $\sigma(p) = 1$ (maximum obstacles), $r(p) = r_{\max}$, producing a wide corridor. The $\alpha$ parameter controls the transition: values below 1 cause early expansion, while values above 1 delay expansion.
 
 \subsubsection{Gradient-Enhanced Radius}
 
@@ -570,12 +462,7 @@ The constrained search executes any standard pathfinding algorithm (A*, Dijkstra
     \text{neighbors}_C(v) = \{u \in \text{neighbors}(v) : u \in C_a \wedge \neg\text{occ}(u)\}
 \end{equation}
 
-This modification requires only $O(1)$ additional time per neighbor check using a hash set for $C_a$ membership. The search algorithm itself remains unchanged, ensuring:
-\begin{itemize}
-    \item \textbf{Algorithm Agnosticism}: Any graph search algorithm can be enhanced
-    \item \textbf{Optimality Preservation}: Within the corridor, the base algorithm's guarantees hold
-    \item \textbf{Minimal Modification}: No algorithm-specific changes required
-\end{itemize}
+This modification requires only $O(1)$ additional time per neighbor check using a hash set for $C_a$ membership. The search algorithm itself remains unchanged, ensuring algorithm agnosticism (any graph search algorithm can be enhanced), optimality preservation (within the corridor, the base algorithm's guarantees hold), and minimal modification (no algorithm-specific changes required).
 
 \subsection{Fallback Expansion Mechanism}
 
@@ -623,17 +510,7 @@ Algorithm~\ref{alg:ails} presents the complete AILS-enhanced pathfinding procedu
 
 \subsection{Multi-Strategy Framework}
 
-AILS supports three corridor strategies, automatically selected based on environmental characteristics:
-
-\begin{enumerate}
-    \item \textbf{Base Strategy}: Fixed-width corridor using $r_{\min}$ only. Used when initial Bresenham line is obstacle-free.
-
-    \item \textbf{Standard Density-Adaptive}: Uses Eq.~\ref{eq:radius} for per-point radius computation. Default strategy for most scenarios.
-
-    \item \textbf{Predictive Gradient-Based}: Incorporates density gradients for lookahead expansion. Used in environments with rapid obstacle transitions.
-\end{enumerate}
-
-The strategy selection is based on a quick scan of obstacle density along the Bresenham line during initialization.
+AILS supports three corridor strategies, automatically selected based on environmental characteristics. The base strategy uses a fixed-width corridor with $r_{\min}$ only, employed when the initial Bresenham line is obstacle-free. The standard density-adaptive strategy uses Eq.~\ref{eq:radius} for per-point radius computation and serves as the default for most scenarios. The predictive gradient-based strategy incorporates density gradients for lookahead expansion and is used in environments with rapid obstacle transitions. Strategy selection is based on a quick scan of obstacle density along the Bresenham line during initialization.
 
 \subsection{Complexity Analysis}
 
@@ -646,14 +523,7 @@ where $k$ is the number of fallback expansions required (typically 0-1).
 \end{theorem}
 
 \begin{proof}
-The complexity breaks down as:
-\begin{enumerate}
-    \item Bresenham line generation: $O(|L|) = O(\max(H, W))$
-    \item Density computation with integral images: $O(|V|)$ preprocessing, $O(|L|)$ queries
-    \item Corridor construction: $O(|L| \cdot r_{\max}^2)$ in worst case
-    \item Constrained search: $O(f(|C_a|))$ where typically $|C_a| \ll |V|$
-    \item Each fallback expansion: $O(|C_a|)$ using BFS
-\end{enumerate}
+The complexity breaks down as follows. Bresenham line generation requires $O(|L|) = O(\max(H, W))$. Density computation with integral images requires $O(|V|)$ preprocessing and $O(|L|)$ queries. Corridor construction requires $O(|L| \cdot r_{\max}^2)$ in the worst case. Constrained search requires $O(f(|C_a|))$ where typically $|C_a| \ll |V|$. Each fallback expansion requires $O(|C_a|)$ using BFS.
 \end{proof}
 
 \begin{theorem}[Space Complexity]
@@ -688,57 +558,23 @@ These properties ensure that AILS provides the same correctness guarantees as th
 
 \subsection{Synthetic Dataset}
 
-We generate comprehensive test configurations with diverse characteristics to evaluate AILS across a wide range of scenarios:
-\begin{itemize}
-    \item \textbf{Grid sizes}: 50$\times$50, 100$\times$100, 150$\times$150, 200$\times$200, 250$\times$250, 300$\times$300, 400$\times$400, 500$\times$500
-    \item \textbf{Obstacle densities}: 10\%, 15\%, 20\%, 25\%, 30\%, 35\%, 40\%
-    \item \textbf{Patterns}: Random (uniform distribution), Clustered (grouped obstacles), Maze (corridors and walls), Room (structured spaces with doorways), Open (sparse obstacles)
-    \item \textbf{Test pairs per configuration}: 50-200 random start-goal pairs with verified path existence
-\end{itemize}
-
-This systematic evaluation across 8 grid sizes, 7 density levels, and 5 patterns enables comprehensive analysis of AILS behavior across diverse environments.
+We generate comprehensive test configurations to evaluate AILS across a wide range of scenarios. Grid sizes range from 50$\times$50 to 500$\times$500 (50, 100, 150, 200, 250, 300, 400, and 500 cells per dimension). Obstacle densities span 10\% to 40\% in 5\% increments. Five obstacle patterns are tested: Random (uniform distribution), Clustered (grouped obstacles), Maze (corridors and walls), Room (structured spaces with doorways), and Open (sparse obstacles). Each configuration uses 50-200 random start-goal pairs with verified path existence. This systematic evaluation across 8 grid sizes, 7 density levels, and 5 patterns enables comprehensive analysis of AILS behavior across diverse environments.
 
 \subsection{Baseline Algorithms}
 
-We compare AILS against established pathfinding algorithms:
-\begin{enumerate}
-    \item \textbf{Standard A*}: Baseline optimal pathfinding with Manhattan heuristic for 4-connected grids and Euclidean heuristic for 8-connected grids
-    \item \textbf{Dijkstra's Algorithm}: Uninformed optimal search serving as a performance baseline
-    \item \textbf{Breadth-First Search (BFS)}: Unweighted optimal search for uniform-cost grids
-    \item \textbf{Bidirectional A*}: Bidirectional search variant exploring from both start and goal
-\end{enumerate}
+We compare AILS against established pathfinding algorithms. Standard A* serves as the baseline optimal pathfinding algorithm with Manhattan heuristic for 4-connected grids and Euclidean heuristic for 8-connected grids. Dijkstra's algorithm provides uninformed optimal search as a performance baseline. Breadth-First Search (BFS) provides unweighted optimal search for uniform-cost grids. Bidirectional A* explores from both start and goal simultaneously.
 
 \subsection{Evaluation Metrics}
 
-\begin{itemize}
-    \item \textbf{Execution Time}: Wall-clock time in milliseconds
-    \item \textbf{Visited Nodes}: Number of nodes expanded during search
-    \item \textbf{Path Cost}: Total edge weight of the solution
-    \item \textbf{Optimality Rate}: Percentage of optimal solutions found
-    \item \textbf{Corridor Efficiency}: Ratio $|C_a| / |V|$
-\end{itemize}
+We evaluate performance using execution time (wall-clock time in milliseconds), visited nodes (number of nodes expanded during search), path cost (total edge weight of the solution), optimality rate (percentage of optimal solutions found), and corridor efficiency (ratio $|C_a| / |V|$).
 
 \subsection{Statistical Methodology}
 
-We employ rigorous statistical analysis:
-\begin{itemize}
-    \item \textbf{Paired t-tests}: For pairwise algorithm comparisons
-    \item \textbf{Cohen's $d$}: Effect size measurement
-    \item \textbf{95\% Confidence Intervals}: For mean estimates
-    \item \textbf{ANOVA with Tukey HSD}: For multiple comparisons
-    \item \textbf{Normality Tests}: Shapiro-Wilk test for assumption validation
-\end{itemize}
+We employ rigorous statistical analysis including paired t-tests for pairwise algorithm comparisons, Cohen's $d$ for effect size measurement, 95\% confidence intervals for mean estimates, ANOVA with Tukey HSD for multiple comparisons, and Shapiro-Wilk tests for normality assumption validation.
 
 \subsection{Hardware and Software}
 
-Experiments were conducted on:
-\begin{itemize}
-    \item CPU: Intel Core i7-12700K @ 3.6GHz
-    \item RAM: 64GB DDR5
-    \item OS: Ubuntu 22.04 LTS
-    \item Implementation: Python 3.10 with NumPy, SciPy
-    \item 100 random start-goal pairs per configuration
-\end{itemize}
+Experiments were conducted on an Intel Core i7-12700K at 3.6GHz with 64GB DDR5 RAM running Ubuntu 22.04 LTS. The implementation uses Python 3.10 with NumPy and SciPy, running 100 random start-goal pairs per configuration.
 
 %==============================================================================
 % SECTION 6: RESULTS AND DISCUSSION
@@ -795,13 +631,7 @@ AILS-Adaptive & 47.90 & 62.95 & 1148 & 99.0\% \\
 \end{tabular}
 \end{table}
 
-\textbf{Key observations:}
-\begin{itemize}
-    \item AILS-Base achieves the lowest mean node count (1013), representing 56.9\% reduction vs A*
-    \item AILS-Adaptive achieves 51.1\% node reduction with lower time variance
-    \item All AILS variants maintain the same 99\% success rate as baseline algorithms
-    \item Dijkstra and BFS explore 6.5$\times$ more nodes than A*, confirming the value of informed search
-\end{itemize}
+AILS-Base achieves the lowest mean node count (1013), representing 56.9\% reduction compared to A*. AILS-Adaptive achieves 51.1\% node reduction with lower time variance. All AILS variants maintain the same 99\% success rate as baseline algorithms. Dijkstra and BFS explore 6.5$\times$ more nodes than A*, confirming the value of informed search.
 
 Figure~\ref{fig:comprehensive_comparison} visualizes the algorithm comparison across time and node metrics.
 
@@ -884,12 +714,7 @@ Size & Time (ms) & Nodes & Time (ms) & Nodes & Reduction \\
 \end{tabular}
 \end{table}
 
-Key observations:
-\begin{itemize}
-    \item \textbf{Node reduction scales with grid size}: From 5.1\% at 50$\times$50 to 76.8\% at 500$\times$500
-    \item \textbf{Time efficiency crossover}: AILS-Adaptive becomes time-competitive at 300$\times$300 and larger grids
-    \item \textbf{Corridor overhead}: On small grids, AILS overhead exceeds search savings; on large grids, the substantial node reduction compensates for corridor construction time
-\end{itemize}
+Node reduction scales with grid size, from 5.1\% at 50$\times$50 to 76.8\% at 500$\times$500. AILS-Adaptive becomes time-competitive at 300$\times$300 and larger grids, marking a time efficiency crossover. On small grids, AILS overhead exceeds search savings; on large grids, the substantial node reduction compensates for corridor construction time.
 
 Figure~\ref{fig:scalability_analysis} visualizes the scalability trends across grid sizes.
 
@@ -924,12 +749,7 @@ Density & \multicolumn{2}{c}{A*} & \multicolumn{2}{c}{AILS-Base} & Success \\
 \end{tabular}
 \end{table}
 
-Key findings:
-\begin{itemize}
-    \item \textbf{Optimal density range}: AILS performs best at 10-20\% density, achieving both time and node reduction
-    \item \textbf{Transition point}: At 25\% density, AILS maintains strong node reduction but with time overhead
-    \item \textbf{High density degradation}: Above 35\% density, corridor expansion significantly impacts performance
-\end{itemize}
+AILS performs best at 10-20\% density, achieving both time and node reduction. At 25\% density, AILS maintains strong node reduction but with time overhead. Above 35\% density, corridor expansion significantly impacts performance.
 
 Figure~\ref{fig:density_analysis} visualizes the performance trends across obstacle densities.
 
@@ -962,15 +782,7 @@ Open & 11.8\% & 16.02 & 1180 & 14.96 & 672 \\
 \end{tabular}
 \end{table}
 
-\textbf{Pattern-specific insights:}
-\begin{itemize}
-    \item \textbf{Random/Open patterns}: AILS achieves 43-58\% node reduction with competitive time
-    \item \textbf{Clustered patterns}: High obstacle density in clusters causes corridor expansion overhead
-    \item \textbf{Maze patterns}: Constrained paths along walls limit AILS's corridor advantage
-    \item \textbf{Room patterns}: Very high density (90.9\%) but structured passages favor A*
-\end{itemize}
-
-These results indicate AILS is most effective for random and open environments with low-to-moderate obstacle densities, which are common in many robotics applications.
+For random and open patterns, AILS achieves 43-58\% node reduction with competitive time. Clustered patterns cause corridor expansion overhead due to high obstacle density in clusters. Maze patterns limit AILS's corridor advantage because paths are constrained along walls. Room patterns with very high density (90.9\%) but structured passages favor A*. These results indicate AILS is most effective for random and open environments with low-to-moderate obstacle densities, which are common in many robotics applications.
 
 Figure~\ref{fig:pattern_analysis} visualizes the performance variation across obstacle patterns.
 
@@ -1049,12 +861,7 @@ $\alpha$ & Avg. Corridor Size & Time (ms) & Optimality (\%) \\
 
 \subsection{Strategy Comparison}
 
-We compare three corridor strategies:
-\begin{enumerate}
-    \item \textbf{Base}: Fixed-width corridor along Bresenham line
-    \item \textbf{Standard}: Density-adaptive corridor without gradient
-    \item \textbf{Predictive}: Full AILS with gradient-based lookahead
-\end{enumerate}
+We compare three corridor strategies: the base strategy (fixed-width corridor along Bresenham line), the standard strategy (density-adaptive corridor without gradient), and the predictive strategy (full AILS with gradient-based lookahead).
 
 \begin{table}[h]
 \centering
@@ -1084,22 +891,12 @@ This section provides an in-depth analysis of our experimental findings, compare
 Our comprehensive experimental evaluation reveals important findings about the AILS framework's effectiveness and limitations.
 
 \subsubsection{Substantial Node Reduction}
-AILS achieves significant reductions in explored nodes:
-\begin{itemize}
-    \item \textbf{AILS-Base vs A*}: 56.0\% node reduction (Cohen's $d$ = 0.82, large effect)
-    \item \textbf{AILS-Adaptive vs A*}: 51.4\% node reduction (Cohen's $d$ = 0.76, medium effect)
-    \item \textbf{Statistical significance}: $p < 0.001$ for both comparisons
-\end{itemize}
+AILS achieves significant reductions in explored nodes. AILS-Base reduces nodes by 56.0\% compared to A* (Cohen's $d$ = 0.82, large effect), while AILS-Adaptive achieves 51.4\% node reduction (Cohen's $d$ = 0.76, medium effect). Both comparisons are statistically significant with $p < 0.001$.
 
-The node reduction demonstrates that AILS effectively restricts the search space while maintaining path quality. However, it is important to note that reduced node exploration does not always translate directly to reduced execution time, as corridor construction overhead must be considered.
+The node reduction demonstrates that AILS effectively restricts the search space while maintaining path quality. However, reduced node exploration does not always translate directly to reduced execution time, as corridor construction overhead must be considered.
 
 \subsubsection{Time-Node Trade-off}
-Our results reveal an important trade-off between time and node efficiency:
-\begin{itemize}
-    \item \textbf{Small grids (50-150)}: Corridor construction overhead exceeds search savings; A* is faster
-    \item \textbf{Medium grids (200-250)}: AILS achieves substantial node reduction but with time overhead
-    \item \textbf{Large grids (300+)}: Node reduction benefits outweigh overhead; AILS becomes time-competitive
-\end{itemize}
+Our results reveal an important trade-off between time and node efficiency. On small grids (50-150), corridor construction overhead exceeds search savings, making A* faster. On medium grids (200-250), AILS achieves substantial node reduction but with time overhead. On large grids (300+), node reduction benefits outweigh overhead, and AILS becomes time-competitive.
 
 This finding suggests AILS is most beneficial for larger-scale pathfinding problems where the search space reduction provides substantial computational savings.
 
@@ -1113,24 +910,13 @@ AILS exhibits \emph{positive scalability}---larger grids show better relative im
 where $n$ is the path length and $c$ is a constant depending on average corridor width. As $H \times W$ grows while $n$ grows only linearly, the efficiency ratio improves.
 
 \subsubsection{Environment-Specific Performance}
-Our pattern analysis reveals that AILS performance varies significantly with obstacle distribution:
-\begin{itemize}
-    \item \textbf{Random/Open patterns (best case)}: 43-58\% node reduction with competitive or better execution time. These environments have evenly distributed obstacles where local density estimation is most accurate.
-    \item \textbf{Clustered patterns}: Substantial corridor expansion near clusters creates overhead. While node reduction is still achieved, time performance degrades significantly.
-    \item \textbf{Maze patterns}: Constrained paths along walls limit the corridor advantage, as the optimal path often deviates significantly from the Bresenham line.
-    \item \textbf{Room patterns}: Very high effective density (90.9\%) but structured passages favor direct A* search over corridor-based approaches.
-\end{itemize}
+Our pattern analysis reveals that AILS performance varies significantly with obstacle distribution. Random and open patterns represent the best case, achieving 43-58\% node reduction with competitive or better execution time; these environments have evenly distributed obstacles where local density estimation is most accurate. Clustered patterns cause substantial corridor expansion near clusters, creating overhead; while node reduction is still achieved, time performance degrades significantly. Maze patterns limit the corridor advantage because constrained paths along walls often deviate significantly from the Bresenham line. Room patterns with very high effective density (90.9\%) but structured passages favor direct A* search over corridor-based approaches.
 
 \subsubsection{Path Quality Preservation}
 AILS maintains 98\% success rate (matching A*) across all tested configurations. Within successful searches, paths found are optimal or near-optimal due to the fallback expansion mechanism. The 2\% failure cases correspond to scenarios where no valid path exists due to obstacle configurations blocking all routes between start and goal.
 
 \subsubsection{Density Sensitivity}
-Performance is strongly correlated with obstacle density:
-\begin{itemize}
-    \item \textbf{Low density (10-20\%)}: AILS achieves both time and node improvements
-    \item \textbf{Medium density (25-30\%)}: Strong node reduction with moderate time overhead
-    \item \textbf{High density (35\%+)}: Performance degrades as corridor expansion dominates
-\end{itemize}
+Performance is strongly correlated with obstacle density. At low density (10-20\%), AILS achieves both time and node improvements. At medium density (25-30\%), strong node reduction is achieved with moderate time overhead. At high density (35\%+), performance degrades as corridor expansion dominates.
 
 This suggests AILS is most suitable for environments with low-to-moderate obstacle density, which includes many practical robotics scenarios such as outdoor navigation, warehouse aisles, and open-plan indoor environments.
 
@@ -1139,79 +925,34 @@ This suggests AILS is most suitable for environments with low-to-moderate obstac
 The core innovation of AILS---localized adaptive expansion---merits detailed analysis.
 
 \subsubsection{Why Local Beats Global}
-Traditional corridor methods either use fixed widths or expand uniformly when blocked. AILS's local adaptation provides fundamental advantages:
-
-\begin{enumerate}
-    \item \textbf{Information Efficiency}: Local density captures precisely what matters---obstacles near the current position along the path. Global metrics average away this crucial local information.
-
-    \item \textbf{Minimal Search Space}: By expanding only where needed, AILS achieves the smallest possible corridor that still contains viable paths. This directly translates to fewer explored nodes.
-
-    \item \textbf{Robustness to Environment Heterogeneity}: Real environments rarely have uniform obstacle distributions. Local adaptation naturally handles the transitions between sparse and dense regions.
-\end{enumerate}
+Traditional corridor methods either use fixed widths or expand uniformly when blocked. AILS's local adaptation provides fundamental advantages. First, local density captures precisely what matters---obstacles near the current position along the path---while global metrics average away this crucial local information. Second, by expanding only where needed, AILS achieves the smallest possible corridor that still contains viable paths, directly translating to fewer explored nodes. Third, real environments rarely have uniform obstacle distributions, and local adaptation naturally handles the transitions between sparse and dense regions.
 
 \subsubsection{Density Sensitivity Analysis}
-The $\alpha$ parameter controls how aggressively corridors expand with density:
-\begin{itemize}
-    \item $\alpha < 1$: Aggressive expansion---corridors widen quickly even at low densities. Better for environments with scattered obstacles that require wide passages.
-    \item $\alpha = 1$: Linear scaling---balanced expansion proportional to obstacle density. Default choice for most scenarios.
-    \item $\alpha > 1$: Conservative expansion---corridors remain narrow until high densities. Better for sparse environments where aggressive expansion wastes search space.
-\end{itemize}
+The $\alpha$ parameter controls how aggressively corridors expand with density. When $\alpha < 1$, corridors widen quickly even at low densities, which is better for environments with scattered obstacles that require wide passages. When $\alpha = 1$, expansion scales linearly with obstacle density, providing balanced expansion for most scenarios. When $\alpha > 1$, corridors remain narrow until high densities, which is better for sparse environments where aggressive expansion wastes search space.
 
 Our experiments indicate $\alpha = 1.0$ provides the best average performance, though $\alpha = 0.8$ shows advantages in maze-like environments.
 
 \subsubsection{Window Size Trade-offs}
-The density estimation window size $w$ presents a classic bias-variance trade-off:
-\begin{itemize}
-    \item \textbf{Small windows} ($w = 3$): Precise local density but sensitive to noise; may miss nearby obstacles just outside the window.
-    \item \textbf{Large windows} ($w = 9+$): Smooth density estimates but may over-expand; includes obstacles that don't affect the path.
-    \item \textbf{Optimal range} ($w = 5-7$): Balances precision with robustness for most environments.
-\end{itemize}
+The density estimation window size $w$ presents a classic bias-variance trade-off. Small windows ($w = 3$) provide precise local density but are sensitive to noise and may miss nearby obstacles just outside the window. Large windows ($w = 9+$) provide smooth density estimates but may over-expand, including obstacles that do not affect the path. The optimal range ($w = 5-7$) balances precision with robustness for most environments.
 
 \subsection{Comparison with State-of-the-Art Methods}
 
 AILS offers unique advantages and trade-offs compared to existing methods.
 
 \subsubsection{AILS vs. Jump Point Search (JPS)}
-JPS~\cite{harabor2011online} achieves dramatic speedups through symmetry pruning but has significant limitations:
-\begin{itemize}
-    \item \textbf{Grid Type}: JPS requires uniform-cost grids; AILS works on any grid type including weighted and non-uniform grids.
-    \item \textbf{Preprocessing}: While JPS+ uses preprocessing, basic JPS does not; AILS requires no preprocessing.
-    \item \textbf{Theoretical Speedup}: JPS can achieve 10-100$\times$ speedups on suitable grids; AILS typically achieves 2-4$\times$ but on any grid type.
-    \item \textbf{Complementarity}: JPS and AILS can be combined---JPS within the adaptive corridor---for maximum efficiency on uniform grids.
-\end{itemize}
+JPS~\cite{harabor2011online} achieves dramatic speedups through symmetry pruning but has significant limitations. JPS requires uniform-cost grids, while AILS works on any grid type including weighted and non-uniform grids. Basic JPS requires no preprocessing, similar to AILS. JPS can achieve 10-100$\times$ speedups on suitable grids; AILS typically achieves 2-4$\times$ but on any grid type. The two approaches can be combined---JPS within the adaptive corridor---for maximum efficiency on uniform grids.
 
 \subsubsection{AILS vs. Hierarchical Path Planning (HPA*)}
-HPA*~\cite{botea2004near} uses hierarchical decomposition for speedup:
-\begin{itemize}
-    \item \textbf{Preprocessing}: HPA* requires expensive offline cluster generation; AILS operates online with no preprocessing.
-    \item \textbf{Path Quality}: HPA* may return suboptimal paths; AILS preserves optimality within the corridor.
-    \item \textbf{Dynamic Environments}: AILS immediately adapts to obstacle changes; HPA* must recompute the hierarchy.
-    \item \textbf{Memory Usage}: HPA* stores hierarchical graphs; AILS stores only the corridor set.
-\end{itemize}
+HPA*~\cite{botea2004near} uses hierarchical decomposition for speedup. HPA* requires expensive offline cluster generation, while AILS operates online with no preprocessing. HPA* may return suboptimal paths, whereas AILS preserves optimality within the corridor. AILS immediately adapts to obstacle changes, while HPA* must recompute the hierarchy. HPA* stores hierarchical graphs, whereas AILS stores only the corridor set.
 
 \subsubsection{AILS vs. Contraction Hierarchies}
-Contraction Hierarchies~\cite{geisberger2008contraction} achieve millisecond queries on road networks:
-\begin{itemize}
-    \item \textbf{Preprocessing Cost}: CH requires hours of preprocessing for large graphs; AILS has zero preprocessing.
-    \item \textbf{Query Speed}: CH is faster for repeated queries; AILS is better for single queries or dynamic environments.
-    \item \textbf{Applicability}: CH is designed for road networks with specific structure; AILS applies to general grid maps.
-\end{itemize}
+Contraction Hierarchies~\cite{geisberger2008contraction} achieve millisecond queries on road networks. CH requires hours of preprocessing for large graphs, while AILS has zero preprocessing. CH is faster for repeated queries, whereas AILS is better for single queries or dynamic environments. CH is designed for road networks with specific structure, while AILS applies to general grid maps.
 
-\subsubsection{AILS vs. MCPP-GAK~\cite{lee2025mcpp}}
-While designed for different problems (point-to-point pathfinding vs. multi-agent coverage), AILS can enhance MCPP-GAK:
-\begin{itemize}
-    \item \textbf{Problem Domain}: MCPP-GAK solves coverage; AILS solves shortest paths.
-    \item \textbf{Integration Potential}: AILS can accelerate the internal pathfinding operations within MCPP-GAK's spanning tree construction.
-    \item \textbf{Complementarity}: AILS's efficiency could reduce the computational cost of MCPP-GAK's cluster propagation phase.
-\end{itemize}
+\subsubsection{AILS vs. MCPP-GAK}
+While designed for different problems (point-to-point pathfinding vs. multi-agent coverage), AILS can enhance MCPP-GAK~\cite{lee2025mcpp}. MCPP-GAK solves coverage while AILS solves shortest paths. AILS can accelerate the internal pathfinding operations within MCPP-GAK's spanning tree construction, and AILS's efficiency could reduce the computational cost of MCPP-GAK's cluster propagation phase.
 
 \subsubsection{AILS vs. Other Corridor Methods}
-Compared to other corridor-based approaches~\cite{huang2024corridor,cohen2023corridor,wu2023corridor}:
-\begin{itemize}
-    \item \textbf{Adaptation Granularity}: AILS adapts at the per-point level; others use fixed or region-based widths.
-    \item \textbf{Density Awareness}: AILS explicitly uses obstacle density; others rely on geometric constraints.
-    \item \textbf{Algorithm Agnosticism}: AILS enhances any search algorithm; others often require specific algorithms.
-\end{itemize}
+Compared to other corridor-based approaches~\cite{huang2024corridor,cohen2023corridor,wu2023corridor}, AILS adapts at the per-point level while others use fixed or region-based widths. AILS explicitly uses obstacle density while others rely on geometric constraints. AILS enhances any search algorithm while others often require specific algorithms.
 
 \subsection{Limitations and Failure Cases}
 
@@ -1224,14 +965,7 @@ Performance degrades in environments with highly heterogeneous obstacle patterns
 For very small grids ($<$30$\times$30), the corridor construction overhead may exceed the search savings. In these cases, direct application of the base algorithm may be faster. We recommend AILS for grids with at least 50$\times$50 cells.
 
 \subsubsection{Parameter Sensitivity}
-While defaults work well in most cases, optimal parameters vary across environments:
-\begin{itemize}
-    \item Dense random environments prefer smaller $r_{\max}$ and larger $w$
-    \item Maze environments benefit from higher $\alpha$ (more aggressive expansion)
-    \item Sparse environments perform best with smaller $w$ (tighter density estimation)
-\end{itemize}
-
-Automatic parameter tuning based on initial environment analysis could address this limitation in future work.
+While defaults work well in most cases, optimal parameters vary across environments. Dense random environments prefer smaller $r_{\max}$ and larger $w$. Maze environments benefit from higher $\alpha$ (more aggressive expansion). Sparse environments perform best with smaller $w$ (tighter density estimation). Automatic parameter tuning based on initial environment analysis could address this limitation in future work.
 
 \subsubsection{Memory Overhead}
 The corridor hash set requires $O(|C_a|)$ additional memory. While typically small (2-10\% of grid size), this may be significant for memory-constrained embedded systems. Alternative representations (e.g., bitmaps) could reduce this overhead.
@@ -1244,68 +978,23 @@ In pathological cases where the optimal path deviates significantly from the Bre
 AILS is particularly well-suited for several application domains where its characteristics provide significant advantages.
 
 \subsubsection{Mobile Robotics}
-In mobile robot navigation~\cite{siciliano2016springer,bento2021autonomous}, AILS addresses key challenges:
-\begin{itemize}
-    \item \textbf{Real-time Planning}: The 60\%+ time reduction enables higher planning frequencies for reactive navigation.
-    \item \textbf{Resource Constraints}: Reduced search space translates to lower energy consumption on battery-powered robots.
-    \item \textbf{Dynamic Environments}: No preprocessing allows immediate adaptation to discovered obstacles.
-\end{itemize}
+In mobile robot navigation~\cite{siciliano2016springer,bento2021autonomous}, AILS addresses key challenges. The node reduction enables higher planning frequencies for reactive navigation. Reduced search space translates to lower energy consumption on battery-powered robots. No preprocessing allows immediate adaptation to discovered obstacles.
 
 \subsubsection{UAV Navigation}
-For unmanned aerial vehicles~\cite{goerzen2010survey,majeed2024uav,gao2024drone}:
-\begin{itemize}
-    \item \textbf{3D Extension}: The algorithm naturally extends to voxel grids for 3D trajectory planning.
-    \item \textbf{Energy Efficiency}: Shorter planning times preserve battery for flight operations.
-    \item \textbf{Obstacle Avoidance}: Density adaptation helps navigate around buildings, terrain, and no-fly zones.
-\end{itemize}
-
-\subsubsection{Video Game AI}
-In game development~\cite{cui2011based,yap2002grid}:
-\begin{itemize}
-    \item \textbf{NPC Pathfinding}: AILS enables natural-looking paths for non-player characters in large open worlds.
-    \item \textbf{Frame Budget}: Faster pathfinding leaves more CPU time for other game systems.
-    \item \textbf{Scalability}: Performance improvements scale with world size, supporting larger game environments.
-\end{itemize}
+For unmanned aerial vehicles~\cite{goerzen2010survey,majeed2024uav,gao2024drone}, the algorithm naturally extends to voxel grids for 3D trajectory planning. Shorter planning times preserve battery for flight operations. Density adaptation helps navigate around buildings, terrain, and no-fly zones.
 
 \subsubsection{Multi-Agent Systems}
-For coordinated multi-agent planning~\cite{stern2019mapf,sharon2015conflict}:
-\begin{itemize}
-    \item \textbf{Per-Agent Planning}: Faster individual path computation reduces overall coordination time.
-    \item \textbf{Conflict Resolution}: Smaller search spaces accelerate conflict-based search methods.
-    \item \textbf{Scalability}: Enables more agents in real-time systems.
-\end{itemize}
+For coordinated multi-agent planning~\cite{stern2019mapf,sharon2015conflict}, faster individual path computation reduces overall coordination time. Smaller search spaces accelerate conflict-based search methods, enabling more agents in real-time systems.
 
 \subsubsection{Autonomous Vehicles}
-For self-driving applications~\cite{gonzalez2015review,paden2016survey,dolgov2010path}:
-\begin{itemize}
-    \item \textbf{Route Computation}: Fast path planning for navigation and lane-change decisions.
-    \item \textbf{Safety}: More time for verification and safety checks within planning cycles.
-    \item \textbf{Adaptability}: Immediate response to detected obstacles without replanning delays.
-\end{itemize}
+For self-driving applications~\cite{gonzalez2015review,paden2016survey,dolgov2010path}, AILS provides fast path planning for navigation and lane-change decisions. More time is available for verification and safety checks within planning cycles. Immediate response to detected obstacles eliminates replanning delays.
 
 \subsubsection{Warehouse Automation}
-For logistics and warehouse robots~\cite{wu2020warehouse,fragapane2021increasing}:
-\begin{itemize}
-    \item \textbf{Dense Environments}: Corridors adapt well to shelf-dense warehouse layouts.
-    \item \textbf{Throughput}: Faster planning increases overall system throughput.
-    \item \textbf{Scalability}: Handles large warehouse grids efficiently.
-\end{itemize}
+For logistics and warehouse robots~\cite{wu2020warehouse}, corridors adapt well to shelf-dense warehouse layouts. Faster planning increases overall system throughput, and the algorithm handles large warehouse grids efficiently.
 
 \subsection{Implementation Considerations}
 
-For practitioners seeking to implement AILS, we offer several recommendations:
-
-\begin{enumerate}
-    \item \textbf{Data Structures}: Use hash sets for $O(1)$ corridor membership queries. Consider spatial hashing for very large grids.
-
-    \item \textbf{Integral Images}: Precompute integral images when processing multiple queries on the same grid. The $O(|V|)$ preprocessing amortizes across queries.
-
-    \item \textbf{Parameter Selection}: Start with defaults ($r_{\min}=2$, $r_{\max}=10\%$ of grid size, $\alpha=1.0$, $w=7$) and tune based on environment characteristics.
-
-    \item \textbf{Hybrid Approaches}: Consider combining AILS with JPS for uniform grids or with learned heuristics for further improvement.
-
-    \item \textbf{Caching}: For repeated queries between similar start-goal pairs, cache and reuse corridor structures.
-\end{enumerate}
+For practitioners seeking to implement AILS, we offer several recommendations. Use hash sets for $O(1)$ corridor membership queries, and consider spatial hashing for very large grids. Precompute integral images when processing multiple queries on the same grid, as the $O(|V|)$ preprocessing amortizes across queries. Start with default parameters ($r_{\min}=2$, $r_{\max}=10\%$ of grid size, $\alpha=1.0$, $w=7$) and tune based on environment characteristics. Consider combining AILS with JPS for uniform grids or with learned heuristics for further improvement. For repeated queries between similar start-goal pairs, cache and reuse corridor structures.
 
 %==============================================================================
 % SECTION 9: CONCLUSION
@@ -1317,67 +1006,17 @@ This paper presented the Adaptive Incremental Line Search (AILS), a novel corrid
 
 \subsection{Summary of Contributions}
 
-This work makes the following contributions to the field of pathfinding and motion planning:
+This work makes several contributions to the field of pathfinding and motion planning. We introduced a localized adaptive corridor mechanism with novel per-point density-based corridor radius computation that adapts to local environmental conditions, achieving search space restriction without preprocessing. We developed an efficient density estimation framework using integral images and gradient-based lookahead, enabling real-time corridor construction. We presented a multi-strategy integration combining base and density-adaptive strategies with automatic selection based on environmental characteristics. We demonstrated an algorithm-agnostic design that enhances any graph search algorithm without requiring algorithm-specific modifications.
 
-\begin{enumerate}
-    \item \textbf{Localized Adaptive Corridor Mechanism}: We introduced a novel per-point density-based corridor radius computation that adapts to local environmental conditions, achieving search space restriction without preprocessing.
-
-    \item \textbf{Density Estimation Framework}: We developed efficient local obstacle density estimation using integral images and gradient-based lookahead, enabling real-time corridor construction.
-
-    \item \textbf{Multi-Strategy Integration}: We presented a unified framework combining base and density-adaptive strategies with automatic selection based on environmental characteristics.
-
-    \item \textbf{Algorithm-Agnostic Design}: We demonstrated that AILS can enhance any graph search algorithm without requiring algorithm-specific modifications, providing a general-purpose optimization layer.
-
-    \item \textbf{Comprehensive Empirical Validation}: We conducted extensive experiments across grid sizes from 50$\times$50 to 500$\times$500 with densities from 10-40\% and five obstacle patterns. Results demonstrate:
-    \begin{itemize}
-        \item 51-56\% node reduction vs A* with statistical significance ($p < 0.001$)
-        \item Medium-to-large effect sizes (Cohen's $d$ = 0.76--0.82)
-        \item Positive scalability with 76.8\% node reduction on 500$\times$500 grids
-        \item Time-competitive performance on grids 300$\times$300 and larger
-    \end{itemize}
-
-    \item \textbf{Theoretical Guarantees}: We provided formal proofs of completeness, bounded suboptimality, convergence, and complexity bounds for the AILS framework.
-
-    \item \textbf{Environment Characterization}: We identified the optimal operating conditions for AILS: random/open obstacle patterns with 10-25\% density on medium-to-large grids, providing practitioners with clear deployment guidance.
-\end{enumerate}
+We conducted comprehensive empirical validation across grid sizes from 50$\times$50 to 500$\times$500 with densities from 10-40\% and five obstacle patterns. Results demonstrate 51-56\% node reduction versus A* with statistical significance ($p < 0.001$), medium-to-large effect sizes (Cohen's $d$ = 0.76--0.82), positive scalability with 76.8\% node reduction on 500$\times$500 grids, and time-competitive performance on grids 300$\times$300 and larger. We provided formal proofs of completeness, bounded suboptimality, convergence, and complexity bounds for the AILS framework. We identified the optimal operating conditions for AILS: random/open obstacle patterns with 10-25\% density on medium-to-large grids, providing practitioners with clear deployment guidance.
 
 \subsection{Key Insights}
 
-Our research reveals several insights for the pathfinding community:
-
-\begin{itemize}
-    \item \textbf{Node Reduction vs Time Trade-off}: AILS achieves substantial node reduction (51-76\%) but corridor construction overhead means time improvements require sufficiently large grids (300$\times$300+). This suggests AILS is best suited for large-scale pathfinding where search space reduction provides significant benefits.
-
-    \item \textbf{Environment Sensitivity}: AILS performance varies significantly with obstacle patterns. Random and open environments show the best results; clustered, maze, and room patterns present challenges due to high local density concentrations or constrained passages.
-
-    \item \textbf{Density Sweet Spot}: The optimal operating range is 10-25\% obstacle density. Below 10\%, standard A* is already efficient; above 30\%, corridor expansion overhead dominates.
-
-    \item \textbf{Scalability Benefits}: AILS's node reduction improvements scale positively with grid size (5.1\% at 50$\times$50 to 76.8\% at 500$\times$500), making it increasingly valuable for larger environments.
-
-    \item \textbf{Practical Deployment}: AILS is most suitable for large-scale navigation in moderately complex environments---applications such as outdoor robotics, warehouse logistics, and open-plan indoor navigation.
-\end{itemize}
+Our research reveals several insights for the pathfinding community. AILS achieves substantial node reduction (51-76\%) but corridor construction overhead means time improvements require sufficiently large grids (300$\times$300+), suggesting AILS is best suited for large-scale pathfinding where search space reduction provides significant benefits. Performance varies significantly with obstacle patterns; random and open environments show the best results while clustered, maze, and room patterns present challenges due to high local density concentrations or constrained passages. The optimal operating range is 10-25\% obstacle density; below 10\%, standard A* is already efficient, and above 30\%, corridor expansion overhead dominates. AILS's node reduction improvements scale positively with grid size (5.1\% at 50$\times$50 to 76.8\% at 500$\times$500), making it increasingly valuable for larger environments. AILS is most suitable for large-scale navigation in moderately complex environments such as outdoor robotics, warehouse logistics, and open-plan indoor navigation.
 
 \subsection{Future Research Directions}
 
-Several promising research directions emerge from this work:
-
-\begin{enumerate}
-    \item \textbf{3D and Continuous Spaces}: Extending AILS to voxel grids for UAV and underwater vehicle navigation, and to continuous configuration spaces for robotic manipulators.
-
-    \item \textbf{Dynamic Environment Adaptation}: Developing incremental corridor update mechanisms for environments with moving obstacles, enabling efficient replanning without full corridor reconstruction.
-
-    \item \textbf{Multi-Agent Corridor Optimization}: Exploring shared corridor structures for robot swarms, where agents cooperatively define and navigate within adaptive corridors.
-
-    \item \textbf{Learning-Based Parameter Selection}: Training neural networks to predict optimal AILS parameters from environment features, eliminating manual tuning.
-
-    \item \textbf{Hardware Acceleration}: Implementing AILS on GPUs for massively parallel corridor construction and density computation, enabling sub-millisecond planning.
-
-    \item \textbf{Integration with Coverage Planning}: Combining AILS with multi-agent coverage path planning algorithms like MCPP-GAK to accelerate internal pathfinding operations.
-
-    \item \textbf{Uncertainty-Aware Corridors}: Extending density estimation to incorporate sensor uncertainty and probabilistic occupancy for robust planning in partially observable environments.
-
-    \item \textbf{Anytime Planning}: Developing anytime variants that progressively refine corridors, providing valid paths at any interruption point with improving quality over time.
-\end{enumerate}
+Several promising research directions emerge from this work. Extending AILS to voxel grids for UAV and underwater vehicle navigation, and to continuous configuration spaces for robotic manipulators, would broaden applicability. Developing incremental corridor update mechanisms for environments with moving obstacles would enable efficient replanning without full corridor reconstruction. Exploring shared corridor structures for robot swarms, where agents cooperatively define and navigate within adaptive corridors, could benefit multi-agent systems. Training neural networks to predict optimal AILS parameters from environment features would eliminate manual tuning. Implementing AILS on GPUs for massively parallel corridor construction and density computation could enable sub-millisecond planning. Combining AILS with multi-agent coverage path planning algorithms like MCPP-GAK to accelerate internal pathfinding operations presents integration opportunities. Extending density estimation to incorporate sensor uncertainty and probabilistic occupancy would enable robust planning in partially observable environments. Developing anytime variants that progressively refine corridors would provide valid paths at any interruption point with improving quality over time.
 
 \subsection{Broader Impact}
 
@@ -1389,11 +1028,7 @@ The algorithm-agnostic nature of AILS facilitates adoption across diverse applic
 
 The results presented in this paper establish AILS as a practical approach for corridor-based pathfinding optimization under specific conditions. The key innovation of localized adaptive expansion---computing per-point corridor radii based on local obstacle density---provides substantial node reduction (51-76\%) while maintaining path quality guarantees.
 
-Our comprehensive evaluation identifies both the strengths and limitations of the approach:
-\begin{itemize}
-    \item \textbf{Strengths}: Significant node reduction, positive scalability, no preprocessing required, algorithm-agnostic design
-    \item \textbf{Limitations}: Corridor construction overhead on small grids, performance degradation in high-density and structured (maze/room) environments
-\end{itemize}
+Our comprehensive evaluation identifies both strengths and limitations. The strengths include significant node reduction, positive scalability, no preprocessing requirement, and algorithm-agnostic design. The limitations include corridor construction overhead on small grids and performance degradation in high-density and structured (maze/room) environments.
 
 AILS represents a valuable addition to the toolkit of researchers and practitioners working on large-scale pathfinding problems in moderately complex environments. The framework is particularly well-suited for outdoor robotics, warehouse automation, and open-plan navigation scenarios where obstacle densities are moderate and grid sizes are substantial.
 
