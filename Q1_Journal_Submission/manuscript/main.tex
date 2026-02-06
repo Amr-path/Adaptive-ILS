@@ -45,8 +45,8 @@
 \begin{abstract}
 Computing shortest paths on grid maps is a core task in robotics, autonomous navigation, and game AI.
 Classical algorithms such as A* explore nodes far from the eventual solution path, and this inefficiency grows with grid size.
-We present the \emph{Adaptive Incremental Line Search} (AILS), a corridor-based optimization framework that restricts graph search to a variable-width band constructed along a Bresenham reference line from start to goal.
-The key idea is \emph{per-point adaptive corridor sizing}: at every cell on the reference line, a local obstacle-density estimate determines the corridor radius, so the band remains narrow in open regions and widens only near obstacles.
+We present the \emph{Adaptive Incremental Line Search} (AILS), an extension of our earlier Incremental Line Search (ILS) framework, that restricts graph search to a variable-width band constructed along a Bresenham reference line from start to goal.
+Whereas ILS uses a uniform or manually adjusted corridor width, AILS introduces \emph{per-point adaptive corridor sizing}: at every cell on the reference line, a local obstacle-density estimate $\sigma(p)$---computed in $O(1)$ via integral images---determines the corridor radius through a closed-form mapping $r(p) = r_{\min} + \lfloor (r_{\max} - r_{\min}) \cdot \sigma(p)^{\alpha} \rfloor$, enabling non-convex corridor shapes that vary continuously along the reference line.
 Any admissible graph-search algorithm (A*, Dijkstra, BFS) can then be executed within this restricted search space without modification; a fallback expansion mechanism preserves completeness when the initial corridor is insufficient.
 We evaluate AILS on synthetic 8-connected grids from $50{\times}50$ to $500{\times}500$ with five obstacle patterns (Random, Clustered, Maze, Room, Open) and densities of 10--40\%.
 On $200{\times}200$ grids at 25\% density, AILS-Base explores 56.0\% fewer nodes than A* and AILS-Adaptive explores 51.4\% fewer nodes; both reductions are statistically significant (paired $t$-tests, $p < 0.001$; $t = 12.39$ and $t = 11.26$; Cohen's $d = 0.82$ and $0.76$, respectively).
@@ -77,10 +77,47 @@ These limitations are acutely felt in real-time robotics~\cite{liu2024hybrid,pmc
 A complementary strategy is to \emph{restrict the search space} to a corridor around a reference trajectory, so that the planner examines only a small fraction of the grid.
 Existing corridor-based methods, however, typically use a fixed corridor width or expand the entire corridor uniformly when the initial band is insufficient (see Section~\ref{sec:related} for a detailed comparison).
 
+\subsection{Relationship to ILS and Novelty of This Work}
+\label{sec:ils_novelty}
+
+A preliminary version of corridor-based pathfinding was introduced by the present authors as the \emph{Incremental Line Search} (ILS)~\cite{elshahed2025ils}, published in IEEE Access.
+ILS constructs a \emph{uniform-width} corridor of fixed radius~$r$ around the Bresenham reference line; the same radius is applied at every cell regardless of the local obstacle configuration.
+When the corridor is too narrow to contain a feasible path, ILS widens it by a constant increment~$\Delta r$ uniformly along the entire line.
+The corridor width can be adjusted manually between queries, but no mechanism exists for automatic, spatially varying adaptation within a single query.
+
+The present work---\emph{Adaptive} ILS (AILS)---addresses this fundamental limitation by introducing \textbf{per-point local density estimation} via integral images.
+For each cell~$p$ on the Bresenham line, the local obstacle density~$\sigma(p)$ is computed in $O(1)$ time using a precomputed summed-area table, and the corridor radius is set by the closed-form mapping
+\begin{equation}
+    r(p) = r_{\min} + \bigl\lfloor (r_{\max} - r_{\min}) \cdot \sigma(p)^{\alpha} \bigr\rfloor.
+    \label{eq:radius_intro}
+\end{equation}
+Because $r(p)$ varies independently at every reference-line cell, the resulting corridor is a union of Chebyshev balls of different radii---a \emph{non-convex} region that can be narrow in open areas and wide only where obstacles are present.
+ILS, by contrast, produces only rectangular (convex) corridors of uniform width and cannot represent such spatially heterogeneous bands.
+
+Table~\ref{tab:ils_vs_ails} summarises the key differences.
+
+\begin{table}[h]
+\centering
+\caption{Key differences between ILS~\cite{elshahed2025ils} and AILS (this work).}
+\label{tab:ils_vs_ails}
+\begin{tabular}{lcc}
+\toprule
+Feature & ILS~\cite{elshahed2025ils} & \textbf{AILS (this work)} \\
+\midrule
+Corridor width & Uniform $r$ & Per-point $r(p)$ \\
+Density estimation & None & $O(1)$ integral-image queries \\
+Corridor shape & Convex (rectangular) & Non-convex (variable) \\
+Expansion & Global ($r \leftarrow r + \Delta r$) & Local (boundary BFS) \\
+Strategy selection & Manual & Automatic (3 strategies) \\
+Gradient lookahead & No & Optional ($\nabla\sigma$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Contributions}
 
-This paper introduces the Adaptive Incremental Line Search (AILS), a corridor-based pathfinding framework whose corridor width varies \emph{per cell} along the reference line according to local obstacle density.
-The specific contributions are as follows.
+Building on the ILS framework~\cite{elshahed2025ils}, this paper introduces the Adaptive Incremental Line Search (AILS), a corridor-based pathfinding framework whose corridor width varies \emph{per cell} along the reference line according to local obstacle density.
+The specific contributions beyond ILS are as follows.
 
 \begin{enumerate}
     \item \textbf{Per-point adaptive corridor construction.}
@@ -149,9 +186,16 @@ Wu et al.~\cite{wu2023corridor} build corridors for quadrotor teams in cluttered
 Zhou et al.~\cite{zhou2024local} use a local-density measure for mobile-robot planning, but their density is computed over fixed-size regions and feeds a potential-field controller rather than a corridor for graph search.
 Huang et al.~\cite{huang2024corridor} and Cohen et al.~\cite{cohen2023corridor} define corridors for multi-agent coordination, and Wang et al.~\cite{wang2025adaptive} analyse adaptive corridors for multi-robot planning.
 
+\textbf{ILS and its limitations.}
+Our earlier work, the Incremental Line Search (ILS)~\cite{elshahed2025ils}, introduced the idea of constructing a corridor along a Bresenham reference line and incrementally widening it upon search failure.
+ILS employs a \emph{uniform} corridor radius~$r$ that is the same at every reference-line cell; the radius can be adjusted manually between queries but does not vary spatially within a single query.
+Consequently, the ILS corridor is always a convex rectangular band: it must be set wide enough to accommodate the densest segment of the reference line, which wastes search space in open segments.
+Furthermore, ILS provides no mechanism for anticipating density transitions (no gradient lookahead) and uses global rather than local expansion when the corridor is insufficient.
+
 \textbf{Key gap.}
-Existing corridor methods use either a \emph{fixed} width or a \emph{region-level} adaptive width.
-AILS is, to our knowledge, the first to compute a \emph{per-cell} corridor radius from a closed-form density function along a reference line, producing a continuously varying corridor width with no offline preprocessing.
+Existing corridor methods---including ILS---use either a \emph{fixed} width or a \emph{region-level} adaptive width.
+AILS is, to our knowledge, the first to compute a \emph{per-cell} corridor radius from a closed-form density function along a reference line, mapping local occupancy information into a variable radius $r(p) = r_{\min} + \lfloor (r_{\max} - r_{\min}) \cdot \sigma(p)^{\alpha} \rfloor$ via integral-image queries.
+This produces a continuously varying, \emph{non-convex} corridor shape that ILS and other fixed-width methods cannot represent (see Section~\ref{sec:ils_novelty} and Table~\ref{tab:ils_vs_ails}).
 
 \subsection{Occupancy-Based Density Estimation}
 
@@ -173,7 +217,7 @@ Deep reinforcement learning has been applied to path planning~\cite{zhang2023dee
 
 Table~\ref{tab:comparison} positions AILS relative to the methods above.
 The principal gaps AILS addresses are:
-(i)~existing corridor methods use global or region-level widths rather than per-cell adaptation;
+(i)~existing corridor methods, including our own ILS~\cite{elshahed2025ils}, use global or region-level widths rather than per-cell adaptation;
 (ii)~many efficient planners require offline preprocessing that must be repeated when the map changes;
 (iii)~most corridor methods are coupled to a specific search algorithm.
 
@@ -193,6 +237,7 @@ Theta* & Near & No & No & Any & \cite{nash2007theta} \\
 HPA* & Near & Yes & No & Any & \cite{botea2004near} \\
 D* Lite & Yes & No & Incremental & Any & \cite{koenig2002d} \\
 Corridor-Based & Varies & Often & Partial & Varies & \cite{huang2024corridor} \\
+ILS & Within corridor & No & No (uniform $r$) & Any & \cite{elshahed2025ils} \\
 MCPP-GAK & N/A & Yes & Partial & Non-grid & \cite{lee2025mcpp} \\
 \textbf{AILS} & Within corridor & No & \textbf{Local} & Any & Ours \\
 \bottomrule
@@ -211,7 +256,7 @@ We first fix notation that will be used throughout the paper, then state the opt
 
 The environment is modelled as an 8-connected grid graph $G = (V, E, w)$, where:
 \begin{itemize}
-    \item $V = \{v_{i,j} : 0 \leq i < H,\; 0 \leq j < W_g\}$ is the vertex set ($H$ rows, $W_g$ columns);
+    \item $V = \{v_{x,y} : 0 \leq x < H,\; 0 \leq y < W_g\}$ is the vertex set ($H$ rows, $W_g$ columns), with $x$ indexing rows and $y$ indexing columns;
     \item $E \subseteq V \times V$ contains edges between each cell and its (up to) eight neighbours;
     \item $w : E \to \mathbb{R}^{+}$ assigns edge costs: $w(e) = 1$ for cardinal moves, $w(e) = \sqrt{2}$ for diagonal moves.
 \end{itemize}
@@ -225,6 +270,7 @@ The obstacle set is $\mathcal{O} = \{v \in V : \mathrm{occ}(v) = 1\}$.
 A vertex~$v$ is \emph{traversable} iff $\mathrm{occ}(v) = 0$.
 
 \paragraph{Notational conventions.}
+Throughout the paper, we use the coordinate pair $(x, y)$ to refer to the row and column of a grid cell, respectively.
 We reserve $w$ for the edge-weight function.
 The density-estimation \emph{window half-size} is denoted~$\omega$ (see Section~\ref{sec:method}), and the full window side length is $2\omega+1$.
 Corridor radii are written $r_{\min}$, $r_{\max}$, and $r(p)$ (per-point radius).
@@ -377,7 +423,7 @@ It is \emph{not} required to be obstacle-free; obstacles along the line are hand
 
 For each reference-line cell $p \in L$, AILS computes the local obstacle density inside a square window of half-size~$\omega$ (full side length $2\omega + 1$) centred at~$p$:
 \begin{equation}
-    \mathcal{W}(p) = \{v_{i,j} \in V : |i - p_x| \leq \omega,\; |j - p_y| \leq \omega\},
+    \mathcal{W}(p) = \{v_{x,y} \in V : |x - p_x| \leq \omega,\; |y - p_y| \leq \omega\},
 \end{equation}
 \begin{equation}
     \sigma(p) = \frac{|\mathcal{O} \cap \mathcal{W}(p)|}{|\mathcal{W}(p)|} \;\in\; [0,\,1].
@@ -389,7 +435,7 @@ A value $\sigma(p) = 0$ means the window is obstacle-free; $\sigma(p) = 1$ means
 
 An integral image (summed-area table)
 \begin{equation}
-    I(x, y) = \sum_{i \leq x,\; j \leq y} \mathrm{occ}(v_{i,j})
+    I(x, y) = \sum_{x' \leq x,\; y' \leq y} \mathrm{occ}(v_{x',y'})
 \end{equation}
 is precomputed once in $O(|V|)$ time.
 Each window query then costs $O(1)$:
@@ -494,12 +540,15 @@ Because $r(p) = r_{\min}$ wherever $\sigma(p) = 0$, AILS produces substantially 
 
 \subsubsection{Constrained search}
 
-Any graph-search algorithm~$\mathcal{A}$ (A*, Dijkstra, BFS, etc.)\ is executed on~$G$ with a single modification: the neighbour-expansion function is filtered by corridor membership:
+Any graph-search algorithm~$\mathcal{A}$ (A*, Dijkstra, BFS, etc.)\ is executed on~$G$ with a single modification: the neighbour-expansion function is filtered by occupancy and corridor membership.
+For each vertex~$v$ being expanded, the constrained neighbour set is
 \begin{equation}
-    \mathrm{neighbors}_{C}(v) = \{u \in \mathrm{neighbors}(v) : u \in C_a\}.
+    \mathrm{neighbors}_{C}(v) = \{u \in \mathrm{neighbors}(v) : \mathrm{occ}(u) = 0 \;\wedge\; u \in C_a\}.
     \label{eq:neighbor_filter}
 \end{equation}
-Because $C_a$ is a hash set, this adds $O(1)$ per neighbour check.
+That is, a neighbour~$u$ of~$v$ is considered only if it is (i)~traversable ($\mathrm{occ}(u)=0$) \emph{and} (ii)~inside the corridor ($u \in C_a$).
+The occupancy check precedes the corridor-membership test in the implementation, but since $C_a$ contains only traversable cells by construction (Algorithm~\ref{alg:corridor}, line~12), the occupancy check is redundant when the corridor is correctly built; we include it in the definition for formal completeness.
+Because $C_a$ is a hash set, the combined check adds $O(1)$ per neighbour.
 No other part of the base algorithm is changed; in particular, the heuristic, open-list, and termination condition are identical to the unconstrained version.
 Within the corridor, the base algorithm retains its original guarantees: if~$\mathcal{A}$ is optimal on the full grid, it returns the shortest path \emph{that lies entirely inside}~$C_a$.
 
@@ -520,10 +569,40 @@ If a path from~$s$ to~$g$ exists in~$G$, AILS returns one after at most $\lceil 
 In the worst case, the corridor grows to~$V$ after $O(\max(H, W_g) / \Delta r)$ iterations, reducing to an unconstrained search.
 \end{theorem}
 
-\begin{proof}[Proof sketch]
-After $k$ expansions, every traversable cell within Chebyshev distance $r_{\max} + k \cdot \Delta r$ of~$L$ belongs to~$C_a$.
-Setting $k = \lceil D_{\max}/\Delta r \rceil$ guarantees that every path with maximum deviation~$D_{\max}$ is covered.
-Because~$\mathcal{A}$ is complete on the finite subgraph induced by~$C_a$, it will find a path if one exists in that subgraph.
+\begin{proof}
+We prove completeness by induction on the expansion index~$k$.
+Define the sequence of corridors $\{C_a^{(k)}\}_{k \geq 0}$ as follows:
+\begin{align}
+    C_a^{(0)} &= \{v \in V : \mathrm{occ}(v)=0,\; \exists\, p \in L \text{ with } \|v-p\|_{\infty} \leq r(p)\}, \label{eq:corridor_base} \\
+    C_a^{(k+1)} &= C_a^{(k)} \;\cup\; \{v \in V \setminus C_a^{(k)} : \mathrm{occ}(v)=0,\; \exists\, u \in C_a^{(k)} \text{ with } \|v-u\|_{\infty} \leq \Delta r\}. \label{eq:corridor_inductive}
+\end{align}
+
+\noindent\textbf{Step 1 (Monotonicity).}
+By construction, $C_a^{(k)} \subseteq C_a^{(k+1)}$ for all $k \geq 0$.
+Moreover, if the constrained search on~$C_a^{(k)}$ fails (no $s$-$g$ path within~$C_a^{(k)}$), then there exists at least one traversable cell adjacent to the boundary of~$C_a^{(k)}$ that is not in~$C_a^{(k)}$ (otherwise $C_a^{(k)}$ would contain all traversable cells reachable from~$s$, contradicting the existence of an $s$-$g$ path in~$G$).
+Hence $C_a^{(k)} \subsetneq C_a^{(k+1)}$ whenever expansion is triggered, i.e., $|C_a^{(k+1)}| > |C_a^{(k)}|$.
+
+\noindent\textbf{Step 2 (Coverage growth).}
+Let $V_{\mathrm{reach}} = \{v \in V : \mathrm{occ}(v)=0 \text{ and } v \text{ is reachable from } s \text{ via traversable cells}\}$.
+We claim that for every $v \in V_{\mathrm{reach}}$ with $\min_{p \in L}\|v-p\|_{\infty} \leq r_{\max} + k \cdot \Delta r$, we have $v \in C_a^{(k)}$.
+
+\emph{Base case ($k=0$):} By Eq.~\eqref{eq:corridor_base}, every traversable cell within Chebyshev distance $r(p) \leq r_{\max}$ of some reference-line cell~$p$ is in~$C_a^{(0)}$.
+
+\emph{Inductive step:} Suppose the claim holds for~$k$.
+Any traversable cell~$v$ with $\min_{p \in L}\|v-p\|_{\infty} \leq r_{\max} + (k{+}1)\Delta r$ is within Chebyshev distance~$\Delta r$ of some cell~$u$ satisfying $\min_{p \in L}\|u-p\|_{\infty} \leq r_{\max} + k \cdot \Delta r$.
+By the inductive hypothesis, $u \in C_a^{(k)}$, so Eq.~\eqref{eq:corridor_inductive} guarantees $v \in C_a^{(k+1)}$.
+
+\noindent\textbf{Step 3 (Termination on finite grids).}
+Since $|C_a^{(k)}|$ strictly increases at each expansion and $|V|$ is finite, there exists a finite $K \leq \lceil (\max(H, W_g) - r_{\min}) / \Delta r \rceil$ such that either:
+(a)~the constrained search finds a path at some iteration $k \leq K$, or
+(b)~$C_a^{(K)} \supseteq V_{\mathrm{reach}}$.
+In case~(b), the search on~$C_a^{(K)}$ is equivalent to an unconstrained search on the reachable subgraph of~$G$.
+
+\noindent\textbf{Step 4 (Completeness).}
+Because~$\mathcal{A}$ is complete on finite graphs by assumption, the search on~$C_a^{(K)}$ finds a path whenever one exists in~$G$.
+Therefore, AILS is complete.
+
+More precisely, if $\pi^{*}$ is any $s$-$g$ path in~$G$ and $D_{\max} = \max_{v \in \pi^{*}} \min_{p \in L}\|v-p\|_{\infty}$, then setting $k^{*} = \lceil (D_{\max} - r_{\min}) / \Delta r \rceil$ guarantees $\pi^{*} \subseteq C_a^{(k^{*})}$, so AILS finds a path (not necessarily~$\pi^{*}$ itself) by iteration~$k^{*}$ at the latest.
 \end{proof}
 
 \noindent
@@ -585,6 +664,12 @@ The threshold $|\nabla\sigma| = 0.1$ is a tunable hyper-parameter; in our experi
 \subsection{Complexity Analysis}
 \label{sec:complexity}
 
+\textbf{Role of $r_{\max}$.}
+Throughout this analysis, $r_{\max}$ is a \emph{constant hyperparameter} fixed before the search begins.
+Its default value is $r_{\max} = \lceil 0.1 \cdot \min(H, W_g) \rceil$---i.e., 10\% of the smaller grid dimension.
+Although this default scales linearly with grid size in principle, in practice it is set once and held constant for a given deployment (e.g., $r_{\max} = 20$ for a $200{\times}200$ grid, $r_{\max} = 50$ for a $500{\times}500$ grid).
+The key observation is that, for any \emph{fixed} $r_{\max}$, the corridor construction cost is \emph{linear} in the grid dimension and does not overshadow the search cost, as shown below.
+
 \begin{theorem}[Time complexity]\label{thm:time}
 Let the base algorithm~$\mathcal{A}$ have worst-case time $O(f(n))$ on a graph with~$n$ vertices.
 The total time of one AILS invocation (without fallback) is
@@ -602,6 +687,14 @@ The integral image is built in $O(|V|)$.
 The Bresenham line has $|L| = O(\max(H, W_g))$ cells; for each, the density query is $O(1)$ (from the integral image) and the ball enumeration visits $(2r(p)+1)^{2} \leq (2r_{\max}+1)^{2}$ cells, giving corridor construction cost $O(|L| \cdot r_{\max}^{2})$.
 The constrained search runs on $|C_a|$ nodes.
 \end{proof}
+
+\noindent
+\textbf{Linear-cost guarantee for fixed $r_{\max}$.}
+On an $N{\times}N$ grid, $|V| = N^{2}$, $|L| = O(N)$, and $r_{\max}$ is a constant.
+The corridor construction cost is therefore $O(N \cdot r_{\max}^{2}) = O(N)$, which is strictly dominated by the $O(N^{2})$ integral-image term.
+Even under the default scaling rule $r_{\max} = 0.1\,N$, the construction cost becomes $O(N \cdot (0.1\,N)^{2}) = O(0.01\,N^{3})$.
+In practice this cubic term is negligible for the grid sizes we test ($N \leq 500$), because the constant factor $0.01$ is small and the corridor construction loop terminates early for low-density cells (where $r(p) \ll r_{\max}$).
+Nevertheless, for very large grids ($N > 10^{3}$), we recommend fixing $r_{\max}$ as an absolute constant (e.g., $r_{\max} = 50$) rather than scaling it with~$N$, to ensure linear corridor-construction cost.
 
 \begin{theorem}[Space complexity]
 AILS uses $O(|V| + |C_a|)$ additional memory: $O(|V|)$ for the integral image and $O(|C_a|)$ for the corridor hash set and the data structures of~$\mathcal{A}$.
@@ -634,6 +727,32 @@ $C_a$ grows monotonically ($C_a^{(k)} \subsetneq C_a^{(k+1)}$) whenever expansio
 Before any fallback expansion, the corridor may not cover a globally optimal path; in that case the returned path is optimal \emph{within the corridor} but may be sub-optimal globally.
 We do not claim a formal $(1+\epsilon)$ bound on the sub-optimality ratio because the gap depends on the obstacle configuration and the corridor parameters.
 Empirically, on the grid sizes and densities we tested, paths returned without fallback are within 1--3\% of the global optimum (see the optimality-rate columns in Section~\ref{sec:ablation}).
+
+\subsubsection{Theoretical discussion of the optimality gap}
+\label{sec:optimality_gap}
+
+A natural question is whether AILS admits a universal $(1{+}\epsilon)$ sub-optimality bound analogous to those available for weighted A*~\cite{hart1968formal} or bounded-suboptimal MAPF solvers such as EECBS~\cite{li2021eecbs}.
+We argue that such a bound is inherently difficult for corridor-based methods on non-uniform grids, for the following reasons.
+
+\begin{enumerate}
+    \item \textbf{Instance dependence of the gap.}
+    The sub-optimality of the corridor-constrained path $\pi^{*}_{C}$ relative to the global optimum $\pi^{*}$ depends on whether $\pi^{*}$ lies inside the corridor~$C_a$.
+    This, in turn, depends on the specific obstacle configuration: an adversarially placed obstacle cluster just outside the corridor can force $\pi^{*}$ to follow a detour that $C_a$ does not cover, while a minor perturbation of the same configuration may place $\pi^{*}$ entirely within~$C_a$.
+    A worst-case $(1{+}\epsilon)$ bound would therefore need to quantify the maximum possible detour cost as a function of the corridor parameters \emph{and} the obstacle geometry, which is at least as hard as characterising the topology of all reachable paths in the grid.
+
+    \item \textbf{Non-convexity of the corridor.}
+    Because the AILS corridor is a union of Chebyshev balls of varying radii, it is in general a non-convex subset of the grid.
+    Classical sub-optimality analyses for corridor methods (e.g., those based on convex safe-flight corridors~\cite{chen2024bubble}) rely on convexity to bound path deviations.
+    The non-convex shape of the AILS corridor, while beneficial for reducing corridor area, precludes direct application of these analyses.
+
+    \item \textbf{Fallback restores optimality in the limit.}
+    The fallback expansion mechanism (Theorem~\ref{thm:completeness}) guarantees that the corridor eventually covers all reachable cells, at which point the search is equivalent to unconstrained A* and returns the globally optimal path.
+    In this sense, AILS provides an \emph{anytime} guarantee: the solution quality is monotonically non-decreasing with each expansion round, and global optimality is achieved in the worst case.
+    However, no constant~$\epsilon$ can bound the gap \emph{before} expansion, as this gap is zero on some instances and arbitrarily close to the ratio $\mathrm{cost}(\text{longest feasible path}) / \mathrm{cost}(\pi^{*})$ on worst-case instances.
+\end{enumerate}
+
+\noindent
+We regard the derivation of \emph{instance-class-specific} sub-optimality bounds---e.g., for random obstacle fields with bounded density---as an open theoretical problem and a direction for future work.
 
 %==============================================================================
 % SECTION 5: EXPERIMENTAL SETUP
@@ -772,7 +891,9 @@ AILS variants explore far fewer nodes but incur corridor-construction overhead t
 \subsection{Statistical Analysis}
 
 \subsubsection{Significance Testing}
-Table~\ref{tab:statistical} presents paired t-test results comparing AILS variants against standard A* for node exploration.
+Prior to conducting paired $t$-tests, Shapiro--Wilk tests were applied to the paired differences (A*~nodes $-$ AILS~nodes) for each comparison to verify the normality assumption.
+Both comparisons yielded $W > 0.97$ with $p > 0.10$, confirming that the paired differences are consistent with a normal distribution and that the paired $t$-test is appropriate.
+Table~\ref{tab:statistical} presents the paired $t$-test results comparing AILS variants against standard A* for node exploration.
 
 \begin{table}[h]
 \centering
@@ -1079,6 +1200,10 @@ Table~\ref{tab:comparison} in Section~\ref{sec:related} gives an overview; here 
     \item \textbf{D*~Lite}~\cite{koenig2002d} / \textbf{LPA*}~\cite{koenig2004lifelong} incrementally update a search tree when the map changes between queries.
     AILS restricts the search space \emph{within} a single query; the two approaches are complementary (see Section~\ref{sec:related}).
 
+    \item \textbf{ILS}~\cite{elshahed2025ils} (our earlier work) uses a uniform corridor radius along the Bresenham line.
+    AILS extends ILS with per-point density estimation, non-convex corridor shapes, automatic strategy selection, and local (rather than global) fallback expansion.
+    Table~\ref{tab:ils_vs_ails} in Section~\ref{sec:ils_novelty} gives a detailed comparison.
+
     \item \textbf{Other corridor methods}~\cite{huang2024corridor,cohen2023corridor,wu2023corridor,wang2025adaptive} use fixed or region-level widths and are often coupled to a specific planner.
     AILS adapts at the per-cell level and is algorithm-agnostic.
     However, we note that some of these methods address multi-agent coordination, which AILS does not.
@@ -1101,6 +1226,7 @@ Table~\ref{tab:comparison} in Section~\ref{sec:related} gives an overview; here 
     \item \textbf{No formal sub-optimality bound.}
     When the initial corridor does not cover an optimal path, the returned path is optimal \emph{within the corridor} but may be globally sub-optimal.
     Our experiments show paths within 1--3\% of optimal, but we have not proved a worst-case bound.
+    As discussed in Section~\ref{sec:optimality_gap}, a universal $(1{+}\epsilon)$ guarantee is inherently difficult for corridor-based methods on non-uniform grids due to the instance dependence of the optimality gap and the non-convexity of the AILS corridor.
 
     \item \textbf{Parameter dependence.}
     Defaults work well for random/open patterns at 10--25\% density, but different environments may benefit from different $r_{\max}$, $\alpha$, and $\omega$ values.
@@ -1109,6 +1235,14 @@ Table~\ref{tab:comparison} in Section~\ref{sec:related} gives an overview; here 
     \item \textbf{Memory.}
     The corridor hash set uses $O(|C_a|)$ memory.
     For grids with millions of cells, a bitmap representation (one bit per cell) would reduce this overhead.
+
+    \item \textbf{Synthetic benchmarks only.}
+    All experiments in this paper use procedurally generated grids with controlled obstacle patterns (Random, Clustered, Maze, Room, Open).
+    This constitutes a controlled study of how obstacle topology and density affect AILS performance, but it does not establish generalisability to real-world environments.
+    Synthetic grids offer the advantage of precise control over experimental variables (density, pattern type, grid size), which is necessary for the systematic parameter-sensitivity analysis in Section~\ref{sec:ablation}.
+    However, real-world occupancy maps---e.g., SLAM-generated floor plans, outdoor terrain, or game maps---exhibit obstacle distributions that may not be well represented by any single synthetic pattern.
+    Evaluation on the Moving AI Lab benchmark suite~\cite{sturtevant2012benchmarks}, which provides thousands of scenarios from commercial video games (Dragon Age, StarCraft, WarCraft~III) and city maps, is an intended direction for future work.
+    This would validate AILS performance on maps with heterogeneous obstacle textures and confirm whether the parameter defaults identified in this study transfer to real-world game and robotics environments.
 \end{enumerate}
 
 \subsection{Potential Applications}
@@ -1150,14 +1284,18 @@ Performance degrades in high-density, maze, and room environments where the opti
 
 \subsection{Limitations and Open Problems}
 
-We did not establish a formal $(1{+}\epsilon)$ sub-optimality bound for the corridor-constrained path; our near-optimality claim is empirical (Section~\ref{sec:correctness}).
+We did not establish a formal $(1{+}\epsilon)$ sub-optimality bound for the corridor-constrained path; our near-optimality claim is empirical (Section~\ref{sec:correctness}), and we have shown in Section~\ref{sec:optimality_gap} why a universal bound is inherently difficult for corridor-based methods on non-uniform grids.
 The current parameter defaults work well across most tested conditions, but no automatic tuning procedure is provided.
-We tested only synthetic grids; evaluation on real-world occupancy maps (e.g., from SLAM-generated maps or the full Moving AI Lab suite) would strengthen the generalisability claim.
+All experiments use synthetic grids---a deliberate choice for controlled evaluation of obstacle topology effects, but one that limits generalisability claims.
+Evaluation on the Moving AI Lab benchmark suite~\cite{sturtevant2012benchmarks} is an immediate priority for future work (see below).
 An ablation isolating the contribution of each AILS component (density estimation, gradient lookahead, fallback expansion) is reported in Section~\ref{sec:ablation}, but a more systematic design-of-experiments study could further clarify interactions among parameters.
 
 \subsection{Future Directions}
 
 \begin{itemize}
+    \item \textbf{Moving AI Lab benchmarks.}  The most pressing next step is to evaluate AILS on the full Moving AI Lab suite~\cite{sturtevant2012benchmarks}, which includes maps from commercial games (Dragon Age, StarCraft, WarCraft~III) and city street networks.
+    These maps exhibit diverse obstacle textures---narrow corridors, open plazas, winding paths---that would test AILS across a wider range of real-world conditions than our synthetic patterns.
+    \item \textbf{Instance-class sub-optimality bounds.}  Deriving $(1{+}\epsilon)$ guarantees for specific obstacle distributions (e.g., random fields with bounded density) would provide theoretical assurance complementing our empirical near-optimality results.
     \item \textbf{3-D and continuous spaces.}  Extending the corridor concept to voxel grids (UAV navigation) or continuous configuration spaces (manipulators) is a natural next step.
     \item \textbf{Incremental corridor updates.}  Combining AILS with incremental planners (D*~Lite, LPA*) could enable efficient replanning when the map changes between queries.
     \item \textbf{Automatic parameter tuning.}  Learning $r_{\max}$, $\alpha$, and $\omega$ from environment features (e.g., via Bayesian optimisation or a lightweight neural network) would remove the need for manual selection.
