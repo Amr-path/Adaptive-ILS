@@ -171,37 +171,46 @@ This supplementary document provides additional details for the AILS paper, incl
 \begin{theorem}[AILS Completeness]
 Let the base search algorithm~$\mathcal{A}$ be complete on finite graphs (e.g., A* with a consistent heuristic, Dijkstra, or BFS on unit-cost graphs).
 If a path exists between start~$s$ and goal~$g$ in grid~$G$, AILS will find one after at most $\lceil D_{\max}/\Delta r \rceil$ expansion iterations, where $D_{\max}$ is the maximum Chebyshev distance from any cell on any $s$-$g$ path to the Bresenham line~$L$.
+In the worst case, the corridor grows to encompass all reachable vertices $V_{\mathrm{reach}}$ after finitely many iterations, reducing to an unconstrained search.
 \end{theorem}
 
 \begin{proof}
-We prove completeness by induction on the expansion index~$k$.
-Define the sequence of corridors $\{C_a^{(k)}\}_{k \geq 0}$ as:
+We prove completeness by \textbf{induction on the expansion index}~$k$.
+Define the set of reachable traversable vertices $V_{\mathrm{reach}} = \{v \in V : \mathrm{occ}(v)=0 \text{ and } v \text{ is connected to } s \text{ via traversable cells}\}$, and the sequence of corridors $\{C_a^{(k)}\}_{k \geq 0}$:
 \begin{align}
     C_a^{(0)} &= \{v \in V : \mathrm{occ}(v)=0,\; \exists\, p \in L \text{ with } \|v-p\|_{\infty} \leq r(p)\}, \\
     C_a^{(k+1)} &= C_a^{(k)} \cup \{v \in V \setminus C_a^{(k)} : \mathrm{occ}(v)=0,\; \exists\, u \in C_a^{(k)} \text{ with } \|v-u\|_{\infty} \leq \Delta r\}.
 \end{align}
 
-\textbf{Step 1 (Monotonicity).}
+\textbf{Step 1 (Strict monotonicity).}
 By construction, $C_a^{(k)} \subseteq C_a^{(k+1)}$ for all $k \geq 0$.
-Moreover, if the constrained search on $C_a^{(k)}$ fails (no $s$-$g$ path within $C_a^{(k)}$), then there exists at least one traversable cell adjacent to the boundary of $C_a^{(k)}$ that is not in $C_a^{(k)}$ (otherwise $C_a^{(k)}$ would contain all traversable cells reachable from $s$, contradicting the existence of an $s$-$g$ path in $G$).
-Hence $C_a^{(k)} \subsetneq C_a^{(k+1)}$ whenever expansion is triggered, i.e., $|C_a^{(k+1)}| > |C_a^{(k)}|$.
+We show the inclusion is \emph{strict} whenever expansion is triggered.
+Suppose the constrained search on~$C_a^{(k)}$ finds no $s$-$g$ path, yet an $s$-$g$ path exists in~$G$.
+Then $g \notin C_a^{(k)}$ or $g$ is unreachable within~$C_a^{(k)}$.
+Since $g \in V_{\mathrm{reach}}$, there exists a path $\pi = (s = u_0, u_1, \ldots, u_m = g)$ in~$G$ with every $u_i$ traversable.
+Let $j$ be the smallest index such that $u_j \notin C_a^{(k)}$; then $u_{j-1} \in C_a^{(k)}$ and $\|u_j - u_{j-1}\|_{\infty} \leq 1 \leq \Delta r$, so $u_j \in C_a^{(k+1)} \setminus C_a^{(k)}$.
+Hence $|C_a^{(k+1)}| > |C_a^{(k)}|$ whenever expansion is triggered.
 
-\textbf{Step 2 (Coverage growth).}
-Let $V_{\mathrm{reach}} = \{v \in V : \mathrm{occ}(v)=0 \text{ and } v \text{ is reachable from } s \text{ via traversable cells}\}$.
-We claim that for every $v \in V_{\mathrm{reach}}$ with $\min_{p \in L}\|v-p\|_{\infty} \leq r_{\max} + k \cdot \Delta r$, we have $v \in C_a^{(k)}$.
+\textbf{Step 2 (Inductive coverage growth).}
+We prove by induction on~$k$ that every traversable cell within Chebyshev distance $r_{\max} + k \cdot \Delta r$ of the reference line~$L$ is contained in~$C_a^{(k)}$.
 
 \emph{Base case ($k=0$):} Every traversable cell within Chebyshev distance $r(p) \leq r_{\max}$ of some reference-line cell $p$ is in $C_a^{(0)}$ by definition.
 
-\emph{Inductive step:} Suppose the claim holds for $k$.
-Any traversable cell $v$ with $\min_{p \in L}\|v-p\|_{\infty} \leq r_{\max} + (k{+}1)\Delta r$ is within Chebyshev distance $\Delta r$ of some cell $u$ satisfying $\min_{p \in L}\|u-p\|_{\infty} \leq r_{\max} + k \cdot \Delta r$.
-By the inductive hypothesis, $u \in C_a^{(k)}$, so $v \in C_a^{(k+1)}$.
+\emph{Inductive step ($k \to k{+}1$):}
+Assume every traversable cell~$v$ with $\min_{p \in L}\|v-p\|_{\infty} \leq r_{\max} + k \cdot \Delta r$ belongs to~$C_a^{(k)}$.
+Any traversable cell $v'$ with $\min_{p \in L}\|v'-p\|_{\infty} \leq r_{\max} + (k{+}1)\Delta r$ is within Chebyshev distance $\Delta r$ of some cell $u$ satisfying $\min_{p \in L}\|u-p\|_{\infty} \leq r_{\max} + k \cdot \Delta r$.
+By the inductive hypothesis, $u \in C_a^{(k)}$, so $v' \in C_a^{(k+1)}$.
 
-\textbf{Step 3 (Termination on finite grids).}
-Since $|C_a^{(k)}|$ strictly increases at each expansion and $|V|$ is finite, there exists a finite $K \leq \lceil (\max(H, W_g) - r_{\min}) / \Delta r \rceil$ such that either (a) the constrained search finds a path at some iteration $k \leq K$, or (b) $C_a^{(K)} \supseteq V_{\mathrm{reach}}$.
-In case (b), the search on $C_a^{(K)}$ is equivalent to an unconstrained search on the reachable subgraph of $G$.
+\textbf{Step 3 (Finite termination).}
+The grid~$V$ is finite ($|V| = H \times W_g$), so $V_{\mathrm{reach}}$ is finite.
+By Step~1, $|C_a^{(k)}|$ strictly increases at each expansion.
+Since $|C_a^{(k)}| \leq |V_{\mathrm{reach}}|$ for all~$k$, the expansion loop can execute at most $|V_{\mathrm{reach}}| - |C_a^{(0)}|$ times.
+More tightly, Step~2 shows that after $K = \lceil (\max(H, W_g) - r_{\min}) / \Delta r \rceil$ iterations, $V_{\mathrm{reach}} \subseteq C_a^{(K)}$.
 
 \textbf{Step 4 (Completeness).}
-Because $\mathcal{A}$ is complete on finite graphs by assumption, the search on $C_a^{(K)}$ finds a path whenever one exists in $G$.
+At some iteration $k^{*} \leq K$, the corridor satisfies $V_{\mathrm{reach}} \subseteq C_a^{(k^{*})}$.
+The constrained search is then equivalent to an unconstrained search on the reachable subgraph of~$G$.
+Because $\mathcal{A}$ is complete on finite graphs by assumption, it finds a path whenever one exists.
 Therefore, AILS is complete.
 
 More precisely, if $\pi^{*}$ is any $s$-$g$ path in $G$ and $D_{\max} = \max_{v \in \pi^{*}} \min_{p \in L}\|v-p\|_{\infty}$, then setting $k^{*} = \lceil (D_{\max} - r_{\min}) / \Delta r \rceil$ guarantees $\pi^{*} \subseteq C_a^{(k^{*})}$, so AILS finds a path by iteration $k^{*}$ at the latest.
