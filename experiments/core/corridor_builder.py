@@ -15,7 +15,7 @@ Key Features:
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Set, Tuple, Optional
+from typing import List, Tuple, Optional
 import numpy as np
 from .data_structures import Grid, Point
 
@@ -169,16 +169,38 @@ class CorridorBuilder:
         radius = r_min + int((r_max - r_min) * (effective_density ** alpha))
         return min(max(radius, r_min), r_max)
 
-    def build_corridor(self, start: Point, goal: Point) -> Tuple[Set[Point], List[int], CorridorStrategy]:
+    # Cache of precomputed disk offsets per radius: radius -> (dy_array, dx_array)
+    _disk_offset_cache: dict = {}
+
+    def _get_disk_offsets(self, radius: int) -> Tuple[np.ndarray, np.ndarray]:
+        """Return (dy, dx) offset arrays for a filled circle of given radius.
+
+        Results are cached so each radius is computed at most once per
+        CorridorBuilder instance (and shared across all instances via the
+        class-level dict).
+        """
+        if radius not in CorridorBuilder._disk_offset_cache:
+            r = radius
+            ys, xs = np.mgrid[-r:r + 1, -r:r + 1]
+            mask = xs * xs + ys * ys <= r * r
+            CorridorBuilder._disk_offset_cache[radius] = (
+                ys[mask].astype(np.int32),
+                xs[mask].astype(np.int32),
+            )
+        return CorridorBuilder._disk_offset_cache[radius]
+
+    def build_corridor(self, start: Point, goal: Point) -> Tuple[np.ndarray, List[int], CorridorStrategy]:
         """
         Build an adaptive corridor from start to goal.
 
         Returns:
             Tuple of:
-            - Set of points in the corridor
+            - Boolean numpy mask (height × width); True = inside corridor
             - List of radii used at each reference point
             - Strategy that was used
         """
+        h, w = self.grid.height, self.grid.width
+
         # Generate reference path
         reference_path = self.bresenham_line(start, goal)
 
@@ -186,13 +208,12 @@ class CorridorBuilder:
         path_clear = all(self.grid.is_free(p.x, p.y) for p in reference_path)
 
         if path_clear and self.config.strategy != CorridorStrategy.BASE:
-            # Temporarily use base strategy for clear paths
             actual_strategy = CorridorStrategy.BASE
         else:
             actual_strategy = self.config.strategy
 
-        # Compute densities and radii for each point
-        corridor = set()
+        # Numpy boolean mask for the corridor
+        corridor = np.zeros((h, w), dtype=bool)
         radii = []
         prev_density = 0.0
 
@@ -204,81 +225,83 @@ class CorridorBuilder:
             else:
                 gradient = 0.0
 
-            if actual_strategy == CorridorStrategy.BASE:
-                radius = self.config.r_min
-            else:
-                radius = self.compute_adaptive_radius(density, gradient)
+            radius = self.config.r_min if actual_strategy == CorridorStrategy.BASE \
+                else self.compute_adaptive_radius(density, gradient)
 
             radii.append(radius)
-
-            # Expand corridor around this point
-            self._expand_corridor_at_point(point, radius, corridor)
-
+            self._stamp_disk(corridor, point.x, point.y, radius)
             prev_density = density
+
+        # Always include start and goal
+        corridor[start.y, start.x] = True
+        corridor[goal.y, goal.x] = True
 
         return corridor, radii, actual_strategy
 
-    def _expand_corridor_at_point(self, center: Point, radius: int, corridor: Set[Point]) -> None:
-        """
-        Expand corridor around a center point with given radius.
+    def _stamp_disk(self, corridor: np.ndarray, cx: int, cy: int, radius: int) -> None:
+        """Paint a filled circle of radius *radius* centred at (cx, cy) into *corridor*.
 
-        Uses a circular expansion pattern.
+        Uses precomputed offset arrays and numpy fancy-indexing — much faster
+        than the old Python double-loop + set.add() approach.
+        """
+        h, w = corridor.shape
+        dy_offsets, dx_offsets = self._get_disk_offsets(radius)
+
+        ys = cy + dy_offsets
+        xs = cx + dx_offsets
+
+        # Clip to grid bounds
+        valid = (ys >= 0) & (ys < h) & (xs >= 0) & (xs < w)
+        corridor[ys[valid], xs[valid]] = True
+
+    def expand_corridor(self, corridor: np.ndarray, expansion_amount: int = 1) -> np.ndarray:
+        """
+        Expand an existing corridor mask by *expansion_amount* cells.
+
+        Uses binary dilation via scipy when available, falling back to a
+        numpy-only implementation so there is no hard scipy dependency.
 
         Args:
-            center: Center point
-            radius: Expansion radius
-            corridor: Set to add points to (modified in place)
-        """
-        for dy in range(-radius, radius + 1):
-            for dx in range(-radius, radius + 1):
-                # Circular expansion (use squared distance to avoid sqrt)
-                if dx * dx + dy * dy <= radius * radius:
-                    nx, ny = center.x + dx, center.y + dy
-                    if self.grid.in_bounds(nx, ny):
-                        corridor.add(Point(nx, ny))
-
-    def expand_corridor(self, corridor: Set[Point], expansion_amount: int = 1) -> Set[Point]:
-        """
-        Expand an existing corridor by a fixed amount.
-
-        Used for fallback when initial corridor doesn't contain a valid path.
-
-        Args:
-            corridor: Existing corridor
-            expansion_amount: How much to expand
+            corridor: Boolean numpy mask (height × width)
+            expansion_amount: Dilation radius in cells
 
         Returns:
-            Expanded corridor (new set)
+            New expanded boolean numpy mask
         """
-        expanded = set(corridor)
+        try:
+            from scipy.ndimage import binary_dilation
+            r = expansion_amount
+            dy, dx = self._get_disk_offsets(r)
+            struct = np.zeros((2 * r + 1, 2 * r + 1), dtype=bool)
+            struct[dy + r, dx + r] = True
+            return binary_dilation(corridor, structure=struct)
+        except ImportError:
+            # Pure-numpy fallback: expand by stamping each True cell
+            expanded = corridor.copy()
+            ys, xs = np.where(corridor)
+            for cy, cx in zip(ys.tolist(), xs.tolist()):
+                self._stamp_disk(expanded, int(cx), int(cy), expansion_amount)
+            return expanded
 
-        for point in corridor:
-            for dy in range(-expansion_amount, expansion_amount + 1):
-                for dx in range(-expansion_amount, expansion_amount + 1):
-                    nx, ny = point.x + dx, point.y + dy
-                    if self.grid.in_bounds(nx, ny):
-                        expanded.add(Point(nx, ny))
-
-        return expanded
-
-    def get_corridor_stats(self, corridor: Set[Point]) -> dict:
+    def get_corridor_stats(self, corridor: np.ndarray) -> dict:
         """
         Get statistics about a corridor.
 
         Args:
-            corridor: The corridor to analyze
+            corridor: Boolean numpy mask (height × width)
 
         Returns:
             Dictionary with corridor statistics
         """
         total_cells = self.grid.width * self.grid.height
-        free_in_corridor = sum(1 for p in corridor if self.grid.is_free(p.x, p.y))
+        corridor_cells = int(np.count_nonzero(corridor))
+        free_in_corridor = int(np.count_nonzero(corridor & ~self.grid._obstacles))
 
         return {
-            'total_cells': len(corridor),
+            'total_cells': corridor_cells,
             'free_cells': free_in_corridor,
-            'efficiency': len(corridor) / total_cells,
-            'free_ratio': free_in_corridor / len(corridor) if corridor else 0.0,
+            'efficiency': corridor_cells / total_cells,
+            'free_ratio': free_in_corridor / corridor_cells if corridor_cells else 0.0,
         }
 
 

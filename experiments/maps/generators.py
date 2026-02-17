@@ -366,6 +366,10 @@ class MapGenerator:
         """
         Generate valid start-goal pairs.
 
+        Uses numpy index-based sampling instead of a Python list of Point
+        objects so it stays fast even for 5 000×5 000+ grids (where the
+        old approach would create ~20 M Python objects).
+
         Args:
             grid: The grid to generate endpoints for
             min_distance: Minimum Manhattan distance between endpoints
@@ -377,32 +381,41 @@ class MapGenerator:
         if min_distance is None:
             min_distance = (grid.width + grid.height) // 4
 
-        free_cells = grid.get_free_cells()
-        if len(free_cells) < 2:
+        # --- Fast numpy path ---
+        free_xs, free_ys = grid.get_free_cells_arrays()
+        n_free = len(free_xs)
+        if n_free < 2:
             raise ValueError("Grid has fewer than 2 free cells")
 
-        pairs = []
-        attempts = 0
-        max_attempts = num_pairs * 100
+        rng = np.random.default_rng(self.seed)
 
-        while len(pairs) < num_pairs and attempts < max_attempts:
-            attempts += 1
+        pairs: List[Tuple[Point, Point]] = []
+        max_attempts = num_pairs * 200
 
-            start = random.choice(free_cells)
-            goal = random.choice(free_cells)
+        for _ in range(max_attempts):
+            if len(pairs) >= num_pairs:
+                break
+            i, j = rng.integers(0, n_free, size=2)
+            if i == j:
+                continue
+            sx, sy = int(free_xs[i]), int(free_ys[i])
+            gx, gy = int(free_xs[j]), int(free_ys[j])
+            if abs(sx - gx) + abs(sy - gy) >= min_distance:
+                pairs.append((Point(sx, sy), Point(gx, gy)))
 
-            if start != goal and start.manhattan_distance(goal) >= min_distance:
-                pairs.append((start, goal))
-
+        # Relaxed-constraint fallback if we couldn't satisfy min_distance
         if len(pairs) < num_pairs:
-            # Relaxed constraint fallback
-            for _ in range(num_pairs - len(pairs)):
-                start = random.choice(free_cells)
-                goal = random.choice(free_cells)
-                if start != goal:
-                    pairs.append((start, goal))
+            for _ in range((num_pairs - len(pairs)) * 50):
+                if len(pairs) >= num_pairs:
+                    break
+                i, j = rng.integers(0, n_free, size=2)
+                if i != j:
+                    pairs.append((
+                        Point(int(free_xs[i]), int(free_ys[i])),
+                        Point(int(free_xs[j]), int(free_ys[j])),
+                    ))
 
-        return pairs
+        return pairs[:num_pairs]
 
 
 # Convenience functions
