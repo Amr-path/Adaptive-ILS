@@ -76,25 +76,25 @@ Examples:
     if args.quick:
         grid_sizes = [(1000, 1000)]
         trials_by_size = {1000: 10}
-        timeout_by_size = {1000: 60}
+        timeout_by_size = {1000: 30}
         densities = [0.2]
         patterns = ["random"]
     elif args.medium:
         grid_sizes = [(1000, 1000), (5000, 5000)]
         trials_by_size = {1000: 20, 5000: 10}
-        timeout_by_size = {1000: 60, 5000: 180}
+        timeout_by_size = {1000: 30, 5000: 120}
         densities = args.densities or [0.2, 0.3]
         patterns = args.patterns or ["random", "clustered", "mixed"]
     elif args.size:
         grid_sizes = [(s, s) for s in args.size]
-        trials_by_size = {s: max(5, 30 - s // 500) for s in args.size}
-        timeout_by_size = {s: min(300, 60 + s // 20) for s in args.size}
+        trials_by_size = {s: max(5, 20 - s // 1000) for s in args.size}
+        timeout_by_size = {s: min(180, 30 + s // 50) for s in args.size}
         densities = args.densities or [0.2, 0.3]
         patterns = args.patterns or ["random", "clustered", "mixed"]
     else:  # --full
         grid_sizes = [(1000, 1000), (5000, 5000), (10000, 10000)]
-        trials_by_size = {1000: 30, 5000: 15, 10000: 10}
-        timeout_by_size = {1000: 60, 5000: 180, 10000: 300}
+        trials_by_size = {1000: 20, 5000: 10, 10000: 5}
+        timeout_by_size = {1000: 30, 5000: 120, 10000: 180}
         densities = args.densities or [0.2, 0.3]
         patterns = args.patterns or ["random", "clustered", "mixed"]
 

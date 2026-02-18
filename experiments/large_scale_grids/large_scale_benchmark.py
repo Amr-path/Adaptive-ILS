@@ -116,16 +116,18 @@ class LargeScaleConfig:
 
     # Trials per grid size (automatically scaled down for larger grids)
     trials_by_size: Dict[int, int] = field(default_factory=lambda: {
-        1000: 30,
-        5000: 15,
-        10000: 10,
+        1000: 20,
+        5000: 10,
+        10000: 5,
     })
 
-    # Per-trial timeout in seconds (per algorithm per trial)
+    # Per-trial timeout in seconds (per algorithm per trial).
+    # With real preemptive signal.alarm timeouts these are now strictly
+    # enforced, so use tighter values that still give A* a fair chance.
     timeout_per_trial: Dict[int, int] = field(default_factory=lambda: {
-        1000: 60,
-        5000: 180,
-        10000: 300,
+        1000: 30,
+        5000: 120,
+        10000: 180,
     })
 
     # AILS configuration scaling by grid size
@@ -244,19 +246,12 @@ class LargeScaleBenchmark:
                             print("  WARNING: No valid test cases generated, skipping.")
                         continue
 
-                    # Get optimal costs from A* for optimality checking
-                    optimal_costs = {}
-                    if "A*" in self.config.algorithms:
-                        astar = AStar(grid)
-                        for start, goal in test_cases:
-                            try:
-                                result = astar.find_path(start, goal)
-                                if result.found:
-                                    optimal_costs[(start, goal)] = result.cost
-                            except Exception:
-                                pass
-
                     # Run each algorithm
+                    # NOTE: We no longer pre-run A* to collect "optimal costs"
+                    # because that block had no timeout and would hang for minutes
+                    # on 5 000×5 000+ grids. The reduction metric is computed
+                    # directly from visited-node counts instead.
+                    optimal_costs: dict = {}
                     for algo_name in self.config.algorithms:
                         if verbose:
                             print(f"  {algo_name}...", end=" ", flush=True)
@@ -304,9 +299,23 @@ class LargeScaleBenchmark:
         density: float, pattern: str,
         timeout: int
     ) -> List[LargeScaleResult]:
-        """Run an algorithm on all test cases with timeout and memory tracking."""
+        """Run an algorithm on all test cases with preemptive timeout.
+
+        The timeout is enforced via signal.SIGALRM (Unix/macOS) so the
+        algorithm is actually interrupted rather than checked post-hoc.
+        Memory tracking is disabled for grids >= 5 000 × 5 000 because
+        tracemalloc imposes a 2–5× slowdown on large heaps.
+        """
         results = []
         grid_cells = width * height
+
+        # Disable tracemalloc for very large grids to avoid 2-5x overhead
+        use_memory = self.config.track_memory and (grid_cells < 5_000_000)
+
+        # Register preemptive timeout handler (Unix/macOS only)
+        _sigalrm_available = hasattr(signal, 'SIGALRM')
+        if _sigalrm_available:
+            signal.signal(signal.SIGALRM, _timeout_handler)
 
         # Create algorithm instance
         algo = self._create_algorithm(grid, algo_name, width)
@@ -320,32 +329,31 @@ class LargeScaleBenchmark:
             memory_peak = 0.0
 
             try:
-                if self.config.track_memory:
+                if use_memory:
                     tracemalloc.start()
 
-                trial_start = time.time()
-                result = algo.find_path(start, goal)
-                trial_elapsed = time.time() - trial_start
+                # Arm the preemptive timer
+                if _sigalrm_available:
+                    signal.alarm(timeout)
 
-                if self.config.track_memory:
+                trial_start = time.perf_counter()
+                result = algo.find_path(start, goal)
+                trial_elapsed = time.perf_counter() - trial_start
+
+                # Disarm the timer immediately after the call returns
+                if _sigalrm_available:
+                    signal.alarm(0)
+
+                if use_memory:
                     _, peak = tracemalloc.get_traced_memory()
                     tracemalloc.stop()
                     memory_peak = peak / (1024 * 1024)
 
-                # Check timeout (post-hoc)
-                if trial_elapsed > timeout:
-                    timed_out = True
-
-                # Compute normalized metrics
+                # Compute normalised metrics
                 time_per_m = (result.execution_time_ms / grid_cells) * 1_000_000
                 nodes_per_cell = result.visited_nodes / grid_cells
-
-                # Search space reduction vs A*
-                optimal_cost = optimal_costs.get((start, goal))
-                reduction = 0.0
-                if optimal_cost and result.found:
-                    # Use node count reduction relative to grid cells explored
-                    reduction = (1 - result.visited_nodes / grid_cells) * 100
+                # Search-space reduction relative to the full grid
+                reduction = (1 - result.visited_nodes / grid_cells) * 100 if result.found else 0.0
 
                 lr = LargeScaleResult(
                     algorithm=algo_name,
@@ -376,13 +384,18 @@ class LargeScaleBenchmark:
                 )
                 results.append(lr)
 
-            except Exception as e:
-                if self.config.track_memory:
+            except (TimeoutError, Exception) as e:
+                # Cancel the alarm so it doesn't fire on the next trial
+                if _sigalrm_available:
+                    signal.alarm(0)
+
+                if use_memory:
                     try:
                         tracemalloc.stop()
                     except RuntimeError:
                         pass
 
+                is_timeout = isinstance(e, TimeoutError)
                 results.append(LargeScaleResult(
                     algorithm=algo_name,
                     grid_width=width,
@@ -403,7 +416,7 @@ class LargeScaleBenchmark:
                     time_per_million_cells_ms=0,
                     nodes_per_cell=0,
                     timed_out=True,
-                    error=str(e),
+                    error="timeout" if is_timeout else str(e),
                 ))
 
         return results

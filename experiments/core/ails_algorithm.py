@@ -11,7 +11,8 @@ algorithm by constraining the search to an adaptive corridor.
 
 import time
 from dataclasses import dataclass, field
-from typing import Set, Dict, List, Callable, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any
+import numpy as np
 from .data_structures import Grid, Point, PathResult, PriorityQueue
 from .heuristics import octile, manhattan, euclidean, chebyshev, get_heuristic
 from .corridor_builder import CorridorBuilder, CorridorConfig, CorridorStrategy
@@ -106,12 +107,13 @@ class AILS:
         if not self.grid.is_free(goal.x, goal.y):
             return PathResult(found=False, algorithm="AILS")
 
-        # Build initial corridor
+        # Build initial corridor (numpy boolean mask, height × width)
         corridor, radii, strategy_used = self.corridor_builder.build_corridor(start, goal)
+        # start/goal already guaranteed by build_corridor; enforce defensively
+        corridor[start.y, start.x] = True
+        corridor[goal.y, goal.x] = True
 
-        # Ensure start and goal are in corridor
-        corridor.add(start)
-        corridor.add(goal)
+        grid_cells = self.grid.width * self.grid.height
 
         # Try to find path within corridor
         total_visited = 0
@@ -123,14 +125,15 @@ class AILS:
 
             if path:
                 end_time = time.perf_counter()
+                c_size = int(np.count_nonzero(corridor))
                 return PathResult(
                     path=path,
                     found=True,
                     cost=cost,
                     visited_nodes=total_visited,
                     execution_time_ms=(end_time - start_time) * 1000,
-                    corridor_size=len(corridor),
-                    corridor_efficiency=len(corridor) / (self.grid.width * self.grid.height),
+                    corridor_size=c_size,
+                    corridor_efficiency=c_size / grid_cells,
                     expansions=expansions,
                     strategy_used=strategy_used.value,
                     algorithm="AILS"
@@ -144,19 +147,20 @@ class AILS:
 
         # Failed to find path even after max expansions
         end_time = time.perf_counter()
+        c_size = int(np.count_nonzero(corridor))
         return PathResult(
             found=False,
             visited_nodes=total_visited,
             execution_time_ms=(end_time - start_time) * 1000,
-            corridor_size=len(corridor),
-            corridor_efficiency=len(corridor) / (self.grid.width * self.grid.height),
+            corridor_size=c_size,
+            corridor_efficiency=c_size / grid_cells,
             expansions=expansions,
             strategy_used=strategy_used.value,
             algorithm="AILS"
         )
 
     def _astar_in_corridor(self, start: Point, goal: Point,
-                           corridor: Set[Point]) -> Tuple[List[Point], float, int]:
+                           corridor: np.ndarray) -> Tuple[List[Point], float, int]:
         """
         Run A* search constrained to a corridor.
 
@@ -225,11 +229,12 @@ class AILS:
         if not self.grid.is_free(start.x, start.y) or not self.grid.is_free(goal.x, goal.y):
             return PathResult(found=False, algorithm=f"AILS-{algorithm}")
 
-        # Build corridor
+        # Build corridor (numpy boolean mask)
         corridor, radii, strategy_used = self.corridor_builder.build_corridor(start, goal)
-        corridor.add(start)
-        corridor.add(goal)
+        corridor[start.y, start.x] = True
+        corridor[goal.y, goal.x] = True
 
+        grid_cells = self.grid.width * self.grid.height
         total_visited = 0
         expansions = 0
 
@@ -249,14 +254,15 @@ class AILS:
 
             if path:
                 end_time = time.perf_counter()
+                c_size = int(np.count_nonzero(corridor))
                 return PathResult(
                     path=path,
                     found=True,
                     cost=cost,
                     visited_nodes=total_visited,
                     execution_time_ms=(end_time - start_time) * 1000,
-                    corridor_size=len(corridor),
-                    corridor_efficiency=len(corridor) / (self.grid.width * self.grid.height),
+                    corridor_size=c_size,
+                    corridor_efficiency=c_size / grid_cells,
                     expansions=expansions,
                     strategy_used=strategy_used.value,
                     algorithm=f"AILS-{algorithm}"
@@ -266,18 +272,19 @@ class AILS:
             corridor = self.corridor_builder.expand_corridor(corridor, self.config.expansion_step)
 
         end_time = time.perf_counter()
+        c_size = int(np.count_nonzero(corridor))
         return PathResult(
             found=False,
             visited_nodes=total_visited,
             execution_time_ms=(end_time - start_time) * 1000,
-            corridor_size=len(corridor),
+            corridor_size=c_size,
             expansions=expansions,
             strategy_used=strategy_used.value,
             algorithm=f"AILS-{algorithm}"
         )
 
     def _dijkstra_in_corridor(self, start: Point, goal: Point,
-                              corridor: Set[Point]) -> Tuple[List[Point], float, int]:
+                              corridor: np.ndarray) -> Tuple[List[Point], float, int]:
         """Dijkstra's algorithm within corridor (A* with h=0)."""
         open_set = PriorityQueue()
         open_set.push(start, 0.0)
@@ -305,7 +312,7 @@ class AILS:
         return [], float('inf'), visited
 
     def _bfs_in_corridor(self, start: Point, goal: Point,
-                         corridor: Set[Point]) -> Tuple[List[Point], float, int]:
+                         corridor: np.ndarray) -> Tuple[List[Point], float, int]:
         """BFS within corridor (unweighted shortest path)."""
         from collections import deque
 
@@ -336,7 +343,7 @@ class AILS:
         return [], float('inf'), visited
 
     def _greedy_in_corridor(self, start: Point, goal: Point,
-                            corridor: Set[Point]) -> Tuple[List[Point], float, int]:
+                            corridor: np.ndarray) -> Tuple[List[Point], float, int]:
         """Greedy best-first search within corridor."""
         open_set = PriorityQueue()
         open_set.push(start, self._heuristic(start, goal))
