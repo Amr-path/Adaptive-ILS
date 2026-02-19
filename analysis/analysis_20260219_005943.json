@@ -1,0 +1,436 @@
+{
+  "summary": {
+    "total_trials": 630,
+    "successful_trials": 539,
+    "timed_out_trials": 53,
+    "grid_sizes": [
+      "10000x10000",
+      "1000x1000",
+      "5000x5000"
+    ],
+    "algorithms": [
+      "A*",
+      "AILS",
+      "JPS"
+    ],
+    "patterns": [
+      "clustered",
+      "mixed",
+      "random"
+    ],
+    "densities": [
+      0.2,
+      0.3
+    ]
+  },
+  "by_grid_size": {
+    "1000x1000": {
+      "AILS": {
+        "trials": 120,
+        "successful": 100,
+        "timeout_rate": 0.16666666666666666,
+        "time_mean_ms": 88.98752707464155,
+        "time_std_ms": 246.28319361662622,
+        "time_median_ms": 42.43429150665179,
+        "time_p95_ms": 112.13997080049006,
+        "nodes_mean": 7682.69,
+        "nodes_std": 18930.880949757728,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 88.98752707464155,
+        "nodes_per_cell": 0.00768269,
+        "corridor_efficiency_mean": 0.007263219999999999,
+        "corridor_size_mean": 7263.22
+      },
+      "A*": {
+        "trials": 120,
+        "successful": 116,
+        "timeout_rate": 0.03333333333333333,
+        "time_mean_ms": 825.6723922019993,
+        "time_std_ms": 1894.4416944426994,
+        "time_median_ms": 238.70424999040551,
+        "time_p95_ms": 3408.2111142779468,
+        "nodes_mean": 69500.55172413793,
+        "nodes_std": 152515.81715272868,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 825.6723922019993,
+        "nodes_per_cell": 0.06950055172413792
+      },
+      "JPS": {
+        "trials": 120,
+        "successful": 115,
+        "timeout_rate": 0.041666666666666664,
+        "time_mean_ms": 769.2184010525639,
+        "time_std_ms": 2075.664221361535,
+        "time_median_ms": 258.78925004508346,
+        "time_p95_ms": 2374.9526749015777,
+        "nodes_mean": 11062.008695652174,
+        "nodes_std": 11854.268992550764,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 769.2184010525639,
+        "nodes_per_cell": 0.011062008695652175
+      }
+    },
+    "5000x5000": {
+      "AILS": {
+        "trials": 60,
+        "successful": 51,
+        "timeout_rate": 0.15,
+        "time_mean_ms": 322.0120466327952,
+        "time_std_ms": 169.01946262004367,
+        "time_median_ms": 298.04070899263024,
+        "time_p95_ms": 651.8773545103613,
+        "nodes_mean": 28915.686274509804,
+        "nodes_std": 16663.812354202928,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 12.880481865311808,
+        "nodes_per_cell": 0.001156627450980392,
+        "corridor_efficiency_mean": 0.0015978282352941172,
+        "corridor_size_mean": 39945.705882352944
+      },
+      "A*": {
+        "trials": 60,
+        "successful": 52,
+        "timeout_rate": 0.13333333333333333,
+        "time_mean_ms": 12984.749635359129,
+        "time_std_ms": 14929.137387917173,
+        "time_median_ms": 6786.076958494959,
+        "time_p95_ms": 44678.220433302304,
+        "nodes_mean": 999783.4038461539,
+        "nodes_std": 1135566.5033035148,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 519.3899854143651,
+        "nodes_per_cell": 0.03999133615384615
+      },
+      "JPS": {
+        "trials": 60,
+        "successful": 41,
+        "timeout_rate": 0.31666666666666665,
+        "time_mean_ms": 18146.89337200536,
+        "time_std_ms": 23582.69246021298,
+        "time_median_ms": 9964.820625027642,
+        "time_p95_ms": 60426.00545898313,
+        "nodes_mean": 684212.8048780488,
+        "nodes_std": 1225631.1018122553,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 725.8757348802145,
+        "nodes_per_cell": 0.02736851219512195
+      }
+    },
+    "10000x10000": {
+      "AILS": {
+        "trials": 30,
+        "successful": 29,
+        "timeout_rate": 0.03333333333333333,
+        "time_mean_ms": 1048.4650978649934,
+        "time_std_ms": 774.7990170577456,
+        "time_median_ms": 921.3641670066863,
+        "time_p95_ms": 2407.941024994943,
+        "nodes_mean": 77198.10344827586,
+        "nodes_std": 46222.261764700255,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 10.484650978649935,
+        "nodes_per_cell": 0.0007719810344827586,
+        "corridor_efficiency_mean": 0.0011392134482758618,
+        "corridor_size_mean": 113921.3448275862
+      },
+      "A*": {
+        "trials": 30,
+        "successful": 25,
+        "timeout_rate": 0.16666666666666666,
+        "time_mean_ms": 41786.168635129,
+        "time_std_ms": 35164.39289090109,
+        "time_median_ms": 35803.668625012506,
+        "time_p95_ms": 109834.87573320736,
+        "nodes_mean": 2757525.76,
+        "nodes_std": 2311279.8021345367,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 417.86168635128996,
+        "nodes_per_cell": 0.0275752576
+      },
+      "JPS": {
+        "trials": 30,
+        "successful": 10,
+        "timeout_rate": 0.6666666666666666,
+        "time_mean_ms": 32160.04318339401,
+        "time_std_ms": 18773.19269637263,
+        "time_median_ms": 30768.033771484625,
+        "time_p95_ms": 62617.53006861543,
+        "nodes_mean": 2237866.3,
+        "nodes_std": 1236859.8347421626,
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "time_per_million_cells_ms": 321.6004318339401,
+        "nodes_per_cell": 0.022378663
+      }
+    }
+  },
+  "by_algorithm": {
+    "AILS": {
+      "total_trials": 210,
+      "successful_trials": 180,
+      "success_rate": 0.8571428571428571,
+      "time_mean_ms": 309.5936384656751,
+      "time_std_ms": 503.53279888817957,
+      "nodes_mean": 24898.411111111112,
+      "memory_mean_mb": 0.0
+    },
+    "A*": {
+      "total_trials": 210,
+      "successful_trials": 193,
+      "success_rate": 0.919047619047619,
+      "time_mean_ms": 9407.456965867003,
+      "time_std_ms": 20146.795037324468,
+      "nodes_mean": 668336.5025906736,
+      "memory_mean_mb": 0.0
+    },
+    "JPS": {
+      "total_trials": 210,
+      "successful_trials": 166,
+      "success_rate": 0.7904761904761904,
+      "time_mean_ms": 6952.308290404848,
+      "time_std_ms": 16040.340051429668,
+      "nodes_mean": 311466.9819277108,
+      "memory_mean_mb": 0.0
+    }
+  },
+  "by_pattern": {
+    "random": {
+      "AILS": {
+        "time_mean_ms": 333.5089827846137,
+        "nodes_mean": 30447.742857142857,
+        "memory_mean_mb": 0.0
+      },
+      "A*": {
+        "time_mean_ms": 9226.696429142195,
+        "nodes_mean": 747682.0428571429,
+        "memory_mean_mb": 0.0
+      },
+      "JPS": {
+        "time_mean_ms": 10004.690549507623,
+        "nodes_mean": 671050.2028985508,
+        "memory_mean_mb": 0.0
+      }
+    },
+    "clustered": {
+      "AILS": {
+        "time_mean_ms": 223.61880587537752,
+        "nodes_mean": 17344.936170212764,
+        "memory_mean_mb": 0.0
+      },
+      "A*": {
+        "time_mean_ms": 5139.516536292451,
+        "nodes_mean": 376118.36363636365,
+        "memory_mean_mb": 0.0
+      },
+      "JPS": {
+        "time_mean_ms": 4610.06661172988,
+        "nodes_mean": 10054.681818181818,
+        "memory_mean_mb": 0.0
+      }
+    },
+    "mixed": {
+      "AILS": {
+        "time_mean_ms": 347.1609881389812,
+        "nodes_mean": 24367.619047619046,
+        "memory_mean_mb": 0.0
+      },
+      "A*": {
+        "time_mean_ms": 13045.544630533721,
+        "nodes_mean": 823010.1764705882,
+        "memory_mean_mb": 0.0
+      },
+      "JPS": {
+        "time_mean_ms": 4922.954667454041,
+        "nodes_mean": 93559.41509433962,
+        "memory_mean_mb": 0.0
+      }
+    }
+  },
+  "scaling_analysis": {
+    "AILS": {
+      "grid_cells": [
+        1000000,
+        25000000,
+        100000000
+      ],
+      "mean_times_ms": [
+        88.98752707464155,
+        322.0120466327952,
+        1048.4650978649934
+      ],
+      "mean_nodes": [
+        7682.69,
+        28915.686274509804,
+        77198.10344827586
+      ],
+      "time_scaling_exponent": 0.5116466032589873,
+      "node_scaling_exponent": 0.48532073436502626,
+      "complexity_estimate": "O(n^0.5) - sublinear"
+    },
+    "A*": {
+      "grid_cells": [
+        1000000,
+        25000000,
+        100000000
+      ],
+      "mean_times_ms": [
+        825.6723922019993,
+        12984.749635359129,
+        41786.168635129
+      ],
+      "mean_nodes": [
+        69500.55172413793,
+        999783.4038461539,
+        2757525.76
+      ],
+      "time_scaling_exponent": 0.8527957723341045,
+      "node_scaling_exponent": 0.8043801175895436,
+      "complexity_estimate": "O(n) - linear"
+    },
+    "JPS": {
+      "grid_cells": [
+        1000000,
+        25000000,
+        100000000
+      ],
+      "mean_times_ms": [
+        769.2184010525639,
+        18146.89337200536,
+        32160.04318339401
+      ],
+      "mean_nodes": [
+        11062.008695652174,
+        684212.8048780488,
+        2237866.3
+      ],
+      "time_scaling_exponent": 0.8408139943232711,
+      "node_scaling_exponent": 1.1756204047942784,
+      "complexity_estimate": "O(n) - linear"
+    }
+  },
+  "ails_corridor_analysis": {
+    "1000x1000": {
+      "corridor_efficiency_mean": 0.007263219999999999,
+      "corridor_efficiency_std": 0.005807555918938705,
+      "corridor_size_mean": 7263.22,
+      "corridor_size_std": 5807.555918938706,
+      "corridor_to_grid_ratio": 0.007263219999999999,
+      "nodes_per_corridor_cell": 0.7990017518029435
+    },
+    "5000x5000": {
+      "corridor_efficiency_mean": 0.0015978282352941172,
+      "corridor_efficiency_std": 0.0010276037056938386,
+      "corridor_size_mean": 39945.705882352944,
+      "corridor_size_std": 25690.092642345964,
+      "corridor_to_grid_ratio": 0.0015978282352941172,
+      "nodes_per_corridor_cell": 0.7720262992838458
+    },
+    "10000x10000": {
+      "corridor_efficiency_mean": 0.0011392134482758618,
+      "corridor_efficiency_std": 0.0007231256652380971,
+      "corridor_size_mean": 113921.3448275862,
+      "corridor_size_std": 72312.56652380971,
+      "corridor_to_grid_ratio": 0.0011392134482758618,
+      "nodes_per_corridor_cell": 0.7467975896092023
+    }
+  },
+  "speedup_vs_astar": {
+    "1000x1000": {
+      "AILS": {
+        "time_speedup": 9.278518229969874,
+        "time_reduction_pct": 89.22241703669911,
+        "node_reduction_pct": 88.9458575372262
+      },
+      "JPS": {
+        "time_speedup": 1.0733913685270482,
+        "time_reduction_pct": 6.837335447159298,
+        "node_reduction_pct": 84.08356707791388
+      }
+    },
+    "5000x5000": {
+      "AILS": {
+        "time_speedup": 40.323800836452,
+        "time_reduction_pct": 97.52007504437424,
+        "node_reduction_pct": 97.1078049342216
+      },
+      "JPS": {
+        "time_speedup": 0.7155356770536985,
+        "time_reduction_pct": -39.75543527299947,
+        "node_reduction_pct": 31.563896515396138
+      }
+    },
+    "10000x10000": {
+      "AILS": {
+        "time_speedup": 39.85461101205835,
+        "time_reduction_pct": 97.49088003970873,
+        "node_reduction_pct": 97.2004575780182
+      },
+      "JPS": {
+        "time_speedup": 1.2993194193441098,
+        "time_reduction_pct": 23.03663093831113,
+        "node_reduction_pct": 18.84513528533638
+      }
+    }
+  },
+  "memory_analysis": {
+    "1000x1000": {
+      "AILS": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      },
+      "A*": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      },
+      "JPS": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      }
+    },
+    "5000x5000": {
+      "AILS": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      },
+      "A*": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      },
+      "JPS": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      }
+    },
+    "10000x10000": {
+      "AILS": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      },
+      "A*": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      },
+      "JPS": {
+        "memory_mean_mb": 0.0,
+        "memory_max_mb": 0.0,
+        "memory_std_mb": 0.0
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+Grid Size,Comparison,t-statistic,p-value (t-test),Wilcoxon p-value,Cohen's d,Effect Size,Significant (p<0.05)
+1000x1000,AILS vs A*,-4.0162,0.000115,0.0,0.5621,medium,True
+1000x1000,AILS vs JPS,-3.2171,0.00175,0.0,0.4572,small,True
+5000x5000,AILS vs A*,-5.9846,0.0,0.0,1.1966,large,True
+5000x5000,AILS vs JPS,-4.7841,2.3e-05,0.0,1.068,large,True
+10000x10000,AILS vs A*,-5.677,8e-06,0.0,1.645,large,True
+10000x10000,AILS vs JPS,-5.0785,0.000664,0.001953,2.3731,large,True
